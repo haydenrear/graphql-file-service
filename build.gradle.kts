@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":utilitymodule"))
     implementation(project(":shared"))
     implementation(project(":message-broker"))
+    implementation(project(":graphql"))
 }
 
 tasks.generateJava {
