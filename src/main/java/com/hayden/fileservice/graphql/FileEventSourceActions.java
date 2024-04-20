@@ -1,4 +1,4 @@
-package com.hayden.fileservice.filesource;
+package com.hayden.fileservice.graphql;
 
 import com.google.common.collect.Lists;
 
@@ -10,7 +10,6 @@ import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.utilitymodule.result.Result;
-import graphql.schema.DataFetchingEnvironment;
 import reactor.core.publisher.Flux;
 
 public interface FileEventSourceActions {
@@ -22,6 +21,10 @@ public interface FileEventSourceActions {
 
         public FileEventError(Throwable throwable) {
             this(Lists.newArrayList(Result.Error.fromE(throwable)));
+        }
+
+        public FileEventError(String throwable) {
+            this(Lists.newArrayList(Result.Error.fromMessage(throwable)));
         }
 
         @Override

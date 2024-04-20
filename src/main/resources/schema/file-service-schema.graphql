@@ -5,6 +5,7 @@ schema {
 }
 
 scalar ByteArray
+scalar Date
 
 type Subscription {
     fileMetadata(fileSearch: FileSearch): FileMetadata
@@ -34,7 +35,7 @@ type FileMetadata @extends @key(fields: "id") {
     name: String!
     path: String!
     size: Int!
-    lastModified: String!
+    lastModified: Date!
     changeType: FileChangeType!
 }
 
@@ -44,6 +45,7 @@ input FileChangeEventInput {
     offset: Int!
     data: ByteArray
     path: String
+    length: Int
 }
 
 type FileChangeEvent {

@@ -3,6 +3,7 @@ package com.hayden.fileservice.filesource;
 import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.config.ByteArray;
+import com.hayden.utilitymodule.result.Result;
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration;
 import graphql.ExecutionResult;
 import graphql.execution.reactive.SubscriptionPublisher;
@@ -37,17 +38,18 @@ class FileEventSourceTest {
     MockMvc mockMvc;
     @Autowired
     DgsQueryExecutor queryExecutor;
+
     @MockBean
     FileDataSource fileDataSource;
 
     @Test
     void update() {
-        when(fileDataSource.getData(any())).thenReturn(List.of(new FileChangeEvent("hello", FileChangeType.ADD_CONTENT, 0, new ByteArray("hello".getBytes()), "")));
+        when(fileDataSource.getData(any())).thenReturn(Flux.just(Result.fromResult(new FileChangeEvent("hello", FileChangeType.ADD_CONTENT, 0, new ByteArray("hello".getBytes()), ""))));
 
         @Language("graphql") String q = """
         subscription {
-            files {
-                fileId 
+            files(fileSearch: {path: "", fileId: "", fileName: "hello", fileType: {type: "text", value: "html"}}) {
+                fileId
             }
         }
         """;

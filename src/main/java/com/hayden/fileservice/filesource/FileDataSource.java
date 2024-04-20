@@ -4,16 +4,18 @@ import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
+import com.hayden.fileservice.graphql.FileEventSourceActions;
+import com.hayden.utilitymodule.result.Result;
+import org.reactivestreams.Publisher;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface FileDataSource {
 
-    List<FileMetadata> getMetadata(FileSearch path);
+    List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path);
 
-    List<FileChangeEvent> getData(FileSearch path);
+    Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getData(FileSearch path);
 
-    Optional<FileMetadata> update(FileChangeEventInput input);
+    Result<FileMetadata, FileEventSourceActions.FileEventError> update(FileChangeEventInput input);
 
 }
