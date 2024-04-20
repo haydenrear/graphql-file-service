@@ -1,0 +1,67 @@
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+scalar ByteArray
+
+type Subscription {
+    fileMetadata(fileSearch: FileSearch): FileMetadata
+    files(fileSearch: FileSearch): FileChangeEvent
+}
+
+input MimeType {
+    type: String!
+    value: String!
+}
+
+input FileSearch {
+    fileId: ID
+    path: String
+    fileName: String
+    fileType: MimeType
+}
+
+type FilePathMetadata @key(fields: "id") {
+    id: ID!
+    enumerateFiles: [FileMetadata]
+    getFileCurrentState(id: ID!): FileMetadata
+}
+
+type FileMetadata @extends @key(fields: "id") {
+    id: ID! @external
+    name: String!
+    path: String!
+    size: Int!
+    lastModified: String!
+    changeType: FileChangeType!
+}
+
+input FileChangeEventInput {
+    fileId: ID!
+    changeType: FileChangeType!
+    offset: Int!
+    data: ByteArray
+    path: String
+}
+
+type FileChangeEvent {
+    fileId: ID
+    changeType: FileChangeType
+    offset: Int
+    data: ByteArray
+    path: String
+}
+
+enum FileChangeType {
+    CREATED
+    REMOVE_CONTENT
+    ADD_CONTENT
+    DELETED
+    EXISTING
+}
+
+type Mutation {
+    update(fileChangeEvent: FileChangeEventInput): FileMetadata
+}
