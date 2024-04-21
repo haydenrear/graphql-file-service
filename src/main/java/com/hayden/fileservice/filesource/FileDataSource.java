@@ -14,7 +14,7 @@ public interface FileDataSource {
 
     List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path);
 
-    Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getData(FileSearch path);
+    Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path);
 
     Result<FileMetadata, FileEventSourceActions.FileEventError> update(FileChangeEventInput input);
 

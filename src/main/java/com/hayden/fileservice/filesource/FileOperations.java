@@ -26,21 +26,9 @@ public interface FileOperations {
 
     Result<FileMetadata, FileEventSourceActions.FileEventError> removeContent(FileChangeEventInput input);
 
-    Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> read(FileSearch path);
+    Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path);
 
-    List<Result<FileMetadata, FileEventSourceActions.FileEventError>> metadata(FileSearch path);
-
-    default Result<FileMetadata, FileEventSourceActions.FileEventError> doUpdate(FileChangeEventInput input) {
-        return switch(input.getChangeType()) {
-                        case DELETED -> deleteFile(input);
-                        case CREATED -> createFile(input);
-                        case ADD_CONTENT ->
-                                addContent(input);
-                        case REMOVE_CONTENT ->
-                                removeContent(input);
-                        case EXISTING -> Result.fromError(new FileEventSourceActions.FileEventError("Cannot update existing."));
-                    };
-    }
+    List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path);
 
     @NotNull Stream<File> filteredFile(String path, @Nullable String fileName);
 

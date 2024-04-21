@@ -5,7 +5,6 @@ import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.fileservice.filechange.FileChangeService;
-import com.hayden.fileservice.filechange.FileChangeSync;
 import com.hayden.fileservice.filesource.FileDataSource;
 import com.hayden.utilitymodule.result.Result;
 import com.netflix.graphql.dgs.DgsMutation;
@@ -73,7 +72,7 @@ public class FileEventSource implements FileEventSourceActions{
     @Override
     public Result<Flux<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment) {
         return Result.fromResult(
-                Flux.from(this.fileDataSource.getData(dataFetchingEnvironment))
+                Flux.from(this.fileDataSource.getFile(dataFetchingEnvironment))
         );
     }
 

@@ -11,7 +11,6 @@ import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,8 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import reactor.core.publisher.Flux;
 
 import com.netflix.graphql.dgs.DgsQueryExecutor;
-
-import java.util.List;
 
 import static com.hayden.shared.assertions.AssertionUtil.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,7 +41,7 @@ class FileEventSourceTest {
 
     @Test
     void update() {
-        when(fileDataSource.getData(any())).thenReturn(Flux.just(Result.fromResult(new FileChangeEvent("hello", FileChangeType.ADD_CONTENT, 0, new ByteArray("hello".getBytes()), ""))));
+        when(fileDataSource.getFile(any())).thenReturn(Flux.just(Result.fromResult(new FileChangeEvent("hello", FileChangeType.ADD_CONTENT, 0, new ByteArray("hello".getBytes()), ""))));
 
         @Language("graphql") String q = """
         subscription {

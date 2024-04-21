@@ -70,7 +70,7 @@ public class LocalFileOperations implements FileOperations {
     }
 
     @Override
-    public Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> read(FileSearch path) {
+    public Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path) {
         return Flux.fromStream(this.filteredFile(path.getPath(), path.getFileName()))
                 .flatMap(nextFile -> {
                     AtomicInteger i = new AtomicInteger(0);
@@ -83,7 +83,7 @@ public class LocalFileOperations implements FileOperations {
     }
 
     @Override
-    public List<Result<FileMetadata, FileEventSourceActions.FileEventError>> metadata(FileSearch path) {
+    public List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
         return this.filteredFile(path.getPath(), path.getFileName())
                 .map(nextFile -> FileOperations.fileMetadata(nextFile, FileChangeType.EXISTING))
                 .toList();

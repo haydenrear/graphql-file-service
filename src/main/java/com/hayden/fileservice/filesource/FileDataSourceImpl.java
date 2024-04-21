@@ -20,17 +20,25 @@ public class FileDataSourceImpl implements FileDataSource {
 
     @Override
     public List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
-        return fileOperations.metadata(path);
+        return fileOperations.getMetadata(path);
     }
 
     @Override
-    public Flux<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getData(FileSearch path) {
-        return Flux.from(fileOperations.read(path));
+    public Flux<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path) {
+        return Flux.from(fileOperations.getFile(path));
     }
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> update(FileChangeEventInput input) {
-        return fileOperations.doUpdate(input);
+        return switch(input.getChangeType()) {
+            case DELETED -> fileOperations.deleteFile(input);
+            case CREATED -> fileOperations.createFile(input);
+            case ADD_CONTENT ->
+                    fileOperations.addContent(input);
+            case REMOVE_CONTENT ->
+                    fileOperations.removeContent(input);
+            case EXISTING -> Result.fromError(new FileEventSourceActions.FileEventError("Cannot update existing."));
+        };
     }
 
 
