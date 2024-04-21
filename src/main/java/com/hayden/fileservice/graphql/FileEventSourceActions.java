@@ -10,7 +10,7 @@ import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.utilitymodule.result.Result;
-import reactor.core.publisher.Flux;
+import org.reactivestreams.Publisher;
 
 public interface FileEventSourceActions {
 
@@ -33,9 +33,9 @@ public interface FileEventSourceActions {
         }
     }
 
-    Result<Flux<Result<FileMetadata, FileEventError>>, FileEventError> getFileMetadata(FileSearch fetchingEnvironment);
+    Result<Publisher<Result<FileMetadata, FileEventError>>, FileEventError> getFileMetadata(FileSearch fetchingEnvironment);
 
-    Result<Flux<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment);
+    Result<Publisher<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment);
 
     Result<FileMetadata, FileEventError> doUpdate(FileChangeEventInput input);
 

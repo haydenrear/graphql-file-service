@@ -7,12 +7,13 @@ import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
 public interface FileDataSource {
 
-    List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path);
+    Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path);
 
     Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path);
 

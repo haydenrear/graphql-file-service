@@ -11,6 +11,7 @@ import com.netflix.graphql.dgs.DgsMutation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import com.netflix.graphql.dgs.DgsComponent;
@@ -43,7 +44,7 @@ public class FileEventSource implements FileEventSourceActions{
                         .mapError(mapSearchError(RETRIEVING_FILE_METADATA))
                         .stream()
                 )
-                .flatMap(r -> r.flatMap(result -> Flux.fromStream(result
+                .flatMap(r -> Flux.from(r).flatMap(result -> Flux.fromStream(result
                         .mapError(mapSearchError(RETRIEVING_FILE_METADATA))
                         .stream()
                 )));
@@ -51,9 +52,11 @@ public class FileEventSource implements FileEventSourceActions{
 
     @DgsSubscription
     public Flux<FileChangeEvent> files(FileSearch fileSearch) {
-        return getFiles(fileSearch)
-                .mapError(mapSearchError(SEARCHING_FOR_FILES))
-                .orElse(Flux.empty())
+        return Flux.from(
+                        getFiles(fileSearch)
+                                .mapError(mapSearchError(SEARCHING_FOR_FILES))
+                                .orElse(Flux.empty())
+                )
                 .flatMap(r -> Mono.justOrEmpty(
                         r.mapError(mapSearchError(SEARCHING_FOR_FILES))
                         .orElse(null)
@@ -65,12 +68,12 @@ public class FileEventSource implements FileEventSourceActions{
     }
 
     @Override
-    public Result<Flux<Result<FileMetadata, FileEventError>>, FileEventError> getFileMetadata(FileSearch fetchingEnvironment) {
-        return Result.fromResult(Flux.fromIterable(fileDataSource.getMetadata(fetchingEnvironment)));
+    public Result<Publisher<Result<FileMetadata, FileEventError>>, FileEventError> getFileMetadata(FileSearch fetchingEnvironment) {
+        return Result.fromResult(fileDataSource.getMetadata(fetchingEnvironment));
     }
 
     @Override
-    public Result<Flux<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment) {
+    public Result<Publisher<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment) {
         return Result.fromResult(
                 Flux.from(this.fileDataSource.getFile(dataFetchingEnvironment))
         );

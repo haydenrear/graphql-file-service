@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -35,9 +34,9 @@ public class LocalFileOperations implements FileOperations {
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input) {
-        return filteredFile(input.getPath())
+        return search(input.getPath())
                 .findAny()
-                .map(f -> FileOperations.createFile(input, f))
+                .map(f -> FileHelpers.createFile(input, f))
                 .orElse(Result.fromError(new FileEventSourceActions.FileEventError("Could not find ")));
     }
 
@@ -49,14 +48,8 @@ public class LocalFileOperations implements FileOperations {
                         fromError(new FileEventSourceActions.FileEventError("Error deleting file."));
             }
 
-            return FileOperations.fileMetadata(nextFile, input.getChangeType());
+            return FileHelpers.fileMetadata(nextFile, input.getChangeType());
         }, "Could not find.");
-    }
-
-    private @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> doOnFile(FileChangeEventInput input, Function<File, Result<FileMetadata, FileEventSourceActions.FileEventError>> toDoOnFile, String errorMessage) {
-        return filteredFile(input.getPath()).findAny()
-                .map(toDoOnFile)
-                .orElse(Result.fromError(new FileEventSourceActions.FileEventError(errorMessage)));
     }
 
     @Override
@@ -66,12 +59,12 @@ public class LocalFileOperations implements FileOperations {
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> removeContent(FileChangeEventInput input) {
-        return doOnFile(input, nextFile -> removeContent(input, nextFile), "Could not find.");
+        return doOnFile(input, nextFile -> removeContent(input, nextFile, fileProperties.getBufferSize()), "Could not find.");
     }
 
     @Override
     public Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path) {
-        return Flux.fromStream(this.filteredFile(path.getPath(), path.getFileName()))
+        return Flux.fromStream(this.search(path.getPath(), path.getFileName()))
                 .flatMap(nextFile -> {
                     AtomicInteger i = new AtomicInteger(0);
                     return Flux.from(fileStream.readFileInChunks(nextFile.getPath(), fileProperties.getBufferSize()))
@@ -83,13 +76,25 @@ public class LocalFileOperations implements FileOperations {
     }
 
     @Override
-    public List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
-        return this.filteredFile(path.getPath(), path.getFileName())
-                .map(nextFile -> FileOperations.fileMetadata(nextFile, FileChangeType.EXISTING))
-                .toList();
-
+    public Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
+        return Flux.fromStream(
+                this.search(path.getPath(), path.getFileName())
+                        .map(nextFile -> FileHelpers.fileMetadata(nextFile, FileChangeType.EXISTING))
+        );
     }
 
+    @Override
+    public @NotNull Stream<File> search(String path, @Nullable String fileName) {
+        File file = Paths.get(path).toFile();
+        boolean isDirectory = file.isDirectory();
+        Assert.assertTrue(!isDirectory || fileName != null);
+        return isDirectory
+                ? Optional.ofNullable(file.listFiles())
+                .stream().flatMap(Arrays::stream)
+                .filter(f -> Optional.of(fileName).map(fileNameFilter -> fileNameFilter.equals(f.getName()))
+                        .orElse(true))
+                : Optional.of(file).stream();
+    }
 
     private static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> addContent(FileChangeEventInput input, File nextFile) {
         int offset = input.getOffset();
@@ -108,47 +113,48 @@ public class LocalFileOperations implements FileOperations {
             // Write back the saved data after the insertion point
             file.write(temp);
         } catch (IOException e) {
-            return FileOperations.fileMetadata(e);
+            return FileHelpers.fileMetadata(e);
         }
 
-        return FileOperations.fileMetadata(nextFile, input.getChangeType());
+        return FileHelpers.fileMetadata(nextFile, input.getChangeType());
     }
 
-    private static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> removeContent(FileChangeEventInput input, File nextFile) {
+    @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> removeContent(FileChangeEventInput input, File nextFile, int bufferSize) {
         int offset = input.getOffset();
         try (RandomAccessFile file = new RandomAccessFile(nextFile, "rw")) {
             // Move the file pointer to the position
-            file.seek(offset);
-
-            // Delete content at the specified position
-            byte[] buffer = new byte[1024];
-            long remainingBytes = input.getLength();
-            while (remainingBytes > 0) {
-                int bytesRead = file.read(buffer, 0, (int) Math.min(buffer.length, remainingBytes));
-                if (bytesRead == -1) {
-                    break;
-                }
-                file.seek(file.getFilePointer() - bytesRead);
-                file.write(new byte[bytesRead]);
-                file.seek(file.getFilePointer() + remainingBytes - bytesRead);
-                remainingBytes -= bytesRead;
+            // the offset + length
+            long startKeep = offset + input.getLength();
+            long writePointer = offset;
+            long amtConsume = Math.min(file.length() - offset, bufferSize);
+            long readPointer = startKeep;
+            long startLength = file.length();
+            while (writePointer <= startLength && readPointer < startLength) {
+                file.seek(readPointer);
+                byte[] toRead = new byte[(int) amtConsume];
+                file.read(toRead, 0, (int) amtConsume);
+                file.seek(writePointer);
+                file.write(toRead);
+                readPointer += amtConsume;
+                long length = file.length();
+                writePointer += amtConsume;
+                amtConsume = Math.min((length - amtConsume) - offset, bufferSize);
             }
+
+            file.setLength(startLength - input.getLength());
+
         } catch (IOException e) {
-            return FileOperations.fileMetadata(e);
+            return FileHelpers.fileMetadata(e);
         }
 
-        return FileOperations.fileMetadata(nextFile, input.getChangeType());
+        return FileHelpers.fileMetadata(nextFile, input.getChangeType());
     }
 
-    public @NotNull Stream<File> filteredFile(String path, @Nullable String fileName) {
-        File file = Paths.get(path).toFile();
-        boolean isDirectory = file.isDirectory();
-        Assert.assertTrue(!isDirectory || fileName != null);
-        return isDirectory
-                ? Optional.ofNullable(file.listFiles())
-                .stream().flatMap(Arrays::stream)
-                .filter(f -> Optional.of(fileName).map(fileNameFilter -> fileNameFilter.equals(f.getName()))
-                        .orElse(true))
-                : Optional.of(file).stream();
+    private @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> doOnFile(FileChangeEventInput input,
+                                                                                          Function<File, Result<FileMetadata, FileEventSourceActions.FileEventError>> toDoOnFile, String errorMessage) {
+        return search(input.getPath()).findAny()
+                .map(toDoOnFile)
+                .orElse(Result.fromError(new FileEventSourceActions.FileEventError(errorMessage)));
     }
+
 }

@@ -5,6 +5,7 @@ import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class FileDataSourceImpl implements FileDataSource {
     private final FileOperations fileOperations;
 
     @Override
-    public List<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
+    public Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
         return fileOperations.getMetadata(path);
     }
 
@@ -33,10 +34,8 @@ public class FileDataSourceImpl implements FileDataSource {
         return switch(input.getChangeType()) {
             case DELETED -> fileOperations.deleteFile(input);
             case CREATED -> fileOperations.createFile(input);
-            case ADD_CONTENT ->
-                    fileOperations.addContent(input);
-            case REMOVE_CONTENT ->
-                    fileOperations.removeContent(input);
+            case ADD_CONTENT -> fileOperations.addContent(input);
+            case REMOVE_CONTENT -> fileOperations.removeContent(input);
             case EXISTING -> Result.fromError(new FileEventSourceActions.FileEventError("Cannot update existing."));
         };
     }
