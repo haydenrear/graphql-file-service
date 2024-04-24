@@ -86,13 +86,13 @@ public class LocalFileOperations implements FileOperations {
     @Override
     public @NotNull Stream<File> search(String path, @Nullable String fileName) {
         File file = Paths.get(path).toFile();
-        boolean isDirectory = file.isDirectory();
-        Assert.assertTrue(!isDirectory || fileName != null);
-        return isDirectory
+        return file.isDirectory()
                 ? Optional.ofNullable(file.listFiles())
                 .stream().flatMap(Arrays::stream)
-                .filter(f -> Optional.of(fileName).map(fileNameFilter -> fileNameFilter.equals(f.getName()))
-                        .orElse(true))
+                .filter(f -> Optional.ofNullable(fileName)
+                        .map(fileNameFilter -> fileNameFilter.equals(f.getName()))
+                        .orElse(true)
+                )
                 : Optional.of(file).stream();
     }
 
