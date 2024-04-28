@@ -23,9 +23,10 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import reactor.core.publisher.Flux;
 
+
 @Component
 @RequiredArgsConstructor
-public class LocalFileOperations implements FileOperations {
+public class LocalNaiveFileOperations implements FileOperations {
 
     private final FileStream fileStream;
 

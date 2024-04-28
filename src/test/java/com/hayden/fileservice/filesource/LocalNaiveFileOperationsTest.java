@@ -31,13 +31,13 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@SpringBootTest(classes = {LocalFileOperations.class, FileStream.class, FileProperties.class})
+@SpringBootTest(classes = {LocalNaiveFileOperations.class, FileStream.class, FileProperties.class})
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(FileProperties.class)
-class LocalFileOperationsTest {
+class LocalNaiveFileOperationsTest {
 
     @Autowired
-    private LocalFileOperations localFileOperations;
+    private LocalNaiveFileOperations localNaiveFileOperations;
 
     @BeforeAll
     public static void setUp() {
@@ -52,7 +52,7 @@ class LocalFileOperationsTest {
 
     @Test
     void createFile() {
-        localFileOperations.createFile(
+        localNaiveFileOperations.createFile(
                 fileChangeEvent(FileChangeType.CREATED, "out.txt", -1, 0, "hello")
         );
 
@@ -67,7 +67,7 @@ class LocalFileOperationsTest {
     void deleteFile() {
         File testFile = new File("work/to_delete.txt");
         Assertions.assertDoesNotThrow(testFile::createNewFile);
-        localFileOperations.deleteFile(fileChangeEvent(FileChangeType.DELETED, "to_delete.txt", -1, 0));
+        localNaiveFileOperations.deleteFile(fileChangeEvent(FileChangeType.DELETED, "to_delete.txt", -1, 0));
         assertThat(testFile.exists()).isFalse();
     }
 
@@ -76,56 +76,56 @@ class LocalFileOperationsTest {
         File testFile = new File("work/to_add_content_to.txt");
         Assertions.assertDoesNotThrow(testFile::createNewFile);
         assertThat(testFile.exists()).isTrue();
-        localFileOperations.addContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_add_content_to.txt", -1, 0, "goodbye"));
+        localNaiveFileOperations.addContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_add_content_to.txt", -1, 0, "goodbye"));
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("goodbye");
     }
 
     @Test
     void removeContentFromBeginning() {
         File testFile = createTestFile("work/to_remove_content_from_beginning.txt");
-        localFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_beginning.txt", 3, 0));
+        localNaiveFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_beginning.txt", 3, 0));
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("lo there");
     }
 
     @Test
     void removeContentFromEnd() {
         File testFile = createTestFile("work/to_remove_content_from_end.txt");
-        localFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_end.txt", 3, 8));
+        localNaiveFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_end.txt", 3, 8));
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("hello th");
     }
 
     @Test
     void removeContentFromBeginningMultiplePass() {
         File testFile = createTestFile("work/to_remove_content_from_beginning_multiple_pass.txt");
-        localFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_beginning_multiple_pass.txt", 3, 0), testFile, 2);
+        localNaiveFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_beginning_multiple_pass.txt", 3, 0), testFile, 2);
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("lo there");
     }
 
     @Test
     void removeContentFromEndMultiplePass() {
         File testFile = createTestFile("work/to_remove_content_from_end_multiple_pass.txt");
-        localFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_end_multiple_pass.txt", 3, 8), testFile, 2);
+        localNaiveFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_end_multiple_pass.txt", 3, 8), testFile, 2);
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("hello th");
     }
 
     @Test
     void removeContentFromMiddleMultiplePass() {
         File testFile = createTestFile("work/to_remove_content_from_middle_multiple_pass.txt");
-        localFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_middle_multiple_pass.txt", 3, 4), testFile, 2);
+        localNaiveFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_middle_multiple_pass.txt", 3, 4), testFile, 2);
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("hellhere");
     }
 
     @Test
     void removeContentFromMiddle() {
         File testFile = createTestFile("work/to_remove_content_from_middle.txt");
-        localFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_middle.txt", 3, 4));
+        localNaiveFileOperations.removeContent(fileChangeEvent(FileChangeType.ADD_CONTENT, "to_remove_content_from_middle.txt", 3, 4));
         assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("hellhere");
     }
 
     @Test
     void getFile() {
         File testFile = createTestFile("work/to_search_for.txt");
-        StepVerifier.create(localFileOperations.getFile(fileSearchEvent("to_search_for.txt", "work")))
+        StepVerifier.create(localNaiveFileOperations.getFile(fileSearchEvent("to_search_for.txt", "work")))
                 .assertNext(r -> assertThat(new String(Assertions.assertDoesNotThrow(() -> Files.readAllBytes(testFile.toPath())))).isEqualTo("hello there"))
                 .expectComplete()
                 .verify();
@@ -135,18 +135,18 @@ class LocalFileOperationsTest {
     @Test
     void search() {
         IntStream.range(0, 20).boxed().map("work/test_dir/to_search_%s.txt"::formatted)
-                .forEach(LocalFileOperationsTest::createTestFile);
+                .forEach(LocalNaiveFileOperationsTest::createTestFile);
 
-        List<File> foundSearched = localFileOperations.search("work/test_dir").toList();
+        List<File> foundSearched = localNaiveFileOperations.search("work/test_dir").toList();
         assertThat(foundSearched).hasSize(20);
     }
 
     @Test
     void getMetadata() {
         IntStream.range(0, 20).boxed().map("work/metadata_test_dir/to_search_metadata_%s.txt"::formatted)
-                .forEach(LocalFileOperationsTest::createTestFile);
+                .forEach(LocalNaiveFileOperationsTest::createTestFile);
 
-        StepVerifier.create(Flux.from(localFileOperations.getMetadata(fileSearchEvent("work/metadata_test_dir"))).collectList())
+        StepVerifier.create(Flux.from(localNaiveFileOperations.getMetadata(fileSearchEvent("work/metadata_test_dir"))).collectList())
                 .assertNext(l -> assertThat(l).hasSize(20))
                 .expectComplete()
                 .verify();
