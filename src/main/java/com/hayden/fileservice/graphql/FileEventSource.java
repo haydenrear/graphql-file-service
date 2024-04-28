@@ -69,12 +69,12 @@ public class FileEventSource implements FileEventSourceActions{
 
     @Override
     public Result<Publisher<Result<FileMetadata, FileEventError>>, FileEventError> getFileMetadata(FileSearch fetchingEnvironment) {
-        return Result.fromResult(fileDataSource.getMetadata(fetchingEnvironment));
+        return Result.ok(fileDataSource.getMetadata(fetchingEnvironment));
     }
 
     @Override
     public Result<Publisher<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment) {
-        return Result.fromResult(
+        return Result.ok(
                 Flux.from(this.fileDataSource.getFile(dataFetchingEnvironment))
         );
     }

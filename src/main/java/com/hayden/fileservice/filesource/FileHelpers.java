@@ -18,12 +18,12 @@ public interface FileHelpers {
 
 
     static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> fileMetadata(File nextFile, FileChangeType input) {
-        return Result.fromResult(new FileMetadata(nextFile.getAbsolutePath(), nextFile.getName(), nextFile.getAbsolutePath(), (int) nextFile.length(),
+        return Result.ok(new FileMetadata(nextFile.getAbsolutePath(), nextFile.getName(), nextFile.getAbsolutePath(), (int) nextFile.length(),
                 LocalDate.ofInstant(Instant.ofEpochMilli(nextFile.lastModified()), ZoneId.systemDefault()), input));
     }
 
     static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> fileMetadata(Throwable t) {
-        return Result.fromError(new FileEventSourceActions.FileEventError(t));
+        return Result.err(new FileEventSourceActions.FileEventError(t));
     }
 
     static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input, File nextFile) {

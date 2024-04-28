@@ -25,16 +25,20 @@ public class FileStream {
         try {
             try (FileChannel channel = FileChannel.open(path)) {
                 ByteBuffer buffer = ByteBuffer.allocate(batchSize);
+                int length = Math.toIntExact(path.toFile().length());
                 int bytesRead;
-                while ((bytesRead = channel.read(buffer)) != -1) {
+                int totalBytesRead = 0;
+                while ((bytesRead = channel.read(buffer)) > 0) {
                     buffer.flip();
-                    sink.next(Result.fromResult(buffer));
-                    buffer = ByteBuffer.allocate(batchSize);
+                    sink.next(Result.ok(buffer));
+                    totalBytesRead += bytesRead;
+                    int min = Math.min(batchSize, length - totalBytesRead);
+                    buffer = ByteBuffer.allocate(min);
                 }
             }
             sink.complete();
         } catch (IOException e) {
-            sink.next(Result.fromError(new FileEventSourceActions.FileEventError()));
+            sink.next(Result.err(new FileEventSourceActions.FileEventError()));
         }
     }
 

@@ -41,7 +41,7 @@ class FileEventSourceTest {
 
     @Test
     void update() {
-        when(fileDataSource.getFile(any())).thenReturn(Flux.just(Result.fromResult(new FileChangeEvent("hello", FileChangeType.ADD_CONTENT, 0, new ByteArray("hello".getBytes()), ""))));
+        when(fileDataSource.getFile(any())).thenReturn(Flux.just(Result.ok(new FileChangeEvent("hello", FileChangeType.ADD_CONTENT, 0, new ByteArray("hello".getBytes()), ""))));
 
         @Language("graphql") String q = """
         subscription {

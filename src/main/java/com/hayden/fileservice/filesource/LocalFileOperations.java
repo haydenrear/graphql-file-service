@@ -6,7 +6,6 @@ import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.fileservice.io.FileStream;
 import com.hayden.utilitymodule.result.Result;
-import graphql.Assert;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,7 @@ public class LocalFileOperations implements FileOperations {
         return search(input.getPath())
                 .findAny()
                 .map(f -> FileHelpers.createFile(input, f))
-                .orElse(Result.fromError(new FileEventSourceActions.FileEventError("Could not find ")));
+                .orElse(Result.err(new FileEventSourceActions.FileEventError("Could not find ")));
     }
 
     @Override
@@ -45,7 +44,7 @@ public class LocalFileOperations implements FileOperations {
         return doOnFile(input, nextFile -> {
             if (!nextFile.delete()) {
                 return Result.<FileMetadata, FileEventSourceActions.FileEventError>
-                        fromError(new FileEventSourceActions.FileEventError("Error deleting file."));
+                        err(new FileEventSourceActions.FileEventError("Error deleting file."));
             }
 
             return FileHelpers.fileMetadata(nextFile, input.getChangeType());
@@ -154,7 +153,7 @@ public class LocalFileOperations implements FileOperations {
                                                                                           Function<File, Result<FileMetadata, FileEventSourceActions.FileEventError>> toDoOnFile, String errorMessage) {
         return search(input.getPath()).findAny()
                 .map(toDoOnFile)
-                .orElse(Result.fromError(new FileEventSourceActions.FileEventError(errorMessage)));
+                .orElse(Result.err(new FileEventSourceActions.FileEventError(errorMessage)));
     }
 
 }

@@ -8,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 import reactor.core.publisher.Flux;
 
 @Component
@@ -36,7 +34,7 @@ public class FileDataSourceImpl implements FileDataSource {
             case CREATED -> fileOperations.createFile(input);
             case ADD_CONTENT -> fileOperations.addContent(input);
             case REMOVE_CONTENT -> fileOperations.removeContent(input);
-            case EXISTING -> Result.fromError(new FileEventSourceActions.FileEventError("Cannot update existing."));
+            case EXISTING -> Result.err(new FileEventSourceActions.FileEventError("Cannot update existing."));
         };
     }
 
