@@ -14,7 +14,7 @@ public class FileProperties {
     /**
      * Number of bytes to assign to the header.
      */
-    long dataStreamFileHeaderLengthBytes;
+    long dataStreamFileHeaderLengthBytes = 2048;
 
     /**
      * The size of the data in a header operation that automatically forces condense.

@@ -1,7 +1,10 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 
 import com.hayden.fileservice.filesource.util.NumberEncoder;
+import com.hayden.utilitymodule.result.Result;
 import lombok.experimental.UtilityClass;
+
+import java.util.List;
 
 /**
  * @param indexEnd End of where data should go in content section.
@@ -22,6 +25,13 @@ public interface DataNode {
 
 //        return NumberEncoder.encodeNumber()
         return null;
+    }
+
+    record FileEventHeaderResult(byte[] responses) implements Result.AggregateResponse {
+
+        @Override
+        public void add(Result.AggregateResponse aggregateResponse) {
+        }
     }
 
     default long length() {
@@ -50,6 +60,15 @@ public interface DataNode {
 
         public static DataNode nodeShifted(SkipNode currentNode, long length) {
             return new SkipNode(currentNode.indexStart + length, currentNode.indexEnd + length, true);
+        }
+
+        public static DataNode fromNode(DataNode dataNode, long indexStart, long indexEnd) {
+            return switch(dataNode) {
+                case AddNode a -> fromNode(a, indexStart, indexEnd);
+                case SkipNode s -> fromNode(s, indexStart, indexEnd);
+                default ->
+                        throw new IllegalStateException("Unexpected value: " + dataNode);
+            };
         }
 
         public static DataNode fromNode(AddNode dataNode, long indexStart, long indexEnd) {

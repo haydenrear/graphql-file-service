@@ -5,12 +5,12 @@ import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -70,16 +70,16 @@ public class DataNodeOperations {
         log.error("Found case not supported: toInsert, {} toInsertInto {}.", toInsert, toInsertInto);
     }
 
-    private static @Nullable ArrayList<DataNode> doBeforeInsert(DataNode toInsertInto, DataNode toInsert) {
+    private static @NotNull ArrayList<DataNode> doBeforeInsert(DataNode toInsertInto, DataNode toInsert) {
         if (isFirstOverlappingAllSecond(toInsert, toInsertInto)) {
             // return just the toInsertInto node shifted, the toInsert node will be returned when there exists
             // a left overlap
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart() + toInsert.length(),
-                            toInsertInto.indexEnd() + toInsert.length(),
-                            true
-                    )
+                            toInsertInto.indexEnd() + toInsert.length()
+                            )
             );
         }
 
@@ -88,11 +88,13 @@ public class DataNodeOperations {
         }
 
         if (isSecondNodeFullyAfterFirstNode(toInsert, toInsertInto, Math.toIntExact(toInsert.length()))) {
-            return Lists.newArrayList(new DataNode.AddNode(
-                    toInsertInto.indexStart() + toInsert.length(),
-                    toInsertInto.indexEnd() + toInsert.length(),
-                    true
-            ));
+            return Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart() + toInsert.length(),
+                            toInsertInto.indexEnd() + toInsert.length()
+                    )
+            );
         }
 
         if (isFirstNodeFullyWithinSecondNode(toInsert, toInsertInto)) {
@@ -100,17 +102,17 @@ public class DataNodeOperations {
             long toInsertSecondLength = toInsertInto.length() - toInsertFirst;
             long toInsertEnd = toInsert.indexEnd() + toInsertSecondLength;
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart(),
-                            true
+                            toInsert.indexStart()
                     ),
                     toInsert,
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsert.indexEnd(),
-                            toInsertEnd,
-                            true
-                    )
+                            toInsertEnd
+                            )
             );
         }
 
@@ -118,10 +120,10 @@ public class DataNodeOperations {
             // shift the node by the amount of the insert - only return toInsertInto node, as the toInsert node will
             // be returned once it ends.
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart() + toInsert.length(),
-                            toInsert.indexEnd() + toInsert.length(),
-                            true
+                            toInsert.indexEnd() + toInsert.length()
                     )
             );
         }
@@ -130,10 +132,10 @@ public class DataNodeOperations {
             // return the node toInsert along with the node being overlapped shifted.
             return Lists.newArrayList(
                     toInsert,
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart() + toInsert.length(),
-                            toInsert.indexEnd() + toInsert.length(),
-                            true
+                            toInsert.indexEnd() + toInsert.length()
                     )
             );
         }
@@ -144,10 +146,10 @@ public class DataNodeOperations {
             long end = start + toInsertInto.length();
             return Lists.newArrayList(
                     toInsert,
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart() + toInsert.length(),
-                            end,
-                            true
+                            end
                     )
             );
         }
@@ -158,36 +160,36 @@ public class DataNodeOperations {
             long toInsertSecondLength = toInsertInto.length() - toInsertFirst;
             long toInsertEnd = toInsert.indexEnd() + toInsertSecondLength;
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart(),
-                            true
+                            toInsert.indexStart()
                     ),
                     toInsert,
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsert.indexEnd(),
-                            toInsertEnd,
-                            true
+                            toInsertEnd
                     )
             );
         }
 
         if (isFirstRightAlterFlushSecond(toInsert, toInsertInto)) {
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart(),
-                            true
+                            toInsert.indexStart()
                     )
             );
         }
 
         if (isFirstLeftAlterFlushSecond(toInsert, toInsertInto)) {
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart(),
-                            true
+                            toInsert.indexStart()
                     )
             );
         }
@@ -198,10 +200,10 @@ public class DataNodeOperations {
             long end = toInsert.indexEnd() + secondPart;
             return Lists.newArrayList(
                     toInsert,
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsert.indexEnd(),
-                            end,
-                            true
+                            end
                     )
             );
         }
@@ -213,15 +215,15 @@ public class DataNodeOperations {
             long secondPart = toInsertInto.length() - firstPart;
             long end = toInsert.indexEnd() + secondPart;
             return Lists.newArrayList(
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart(),
-                            true
+                            toInsert.indexStart()
                     ),
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsert.indexEnd(),
-                            end,
-                            true
+                            end
                     )
             );
         }
@@ -230,10 +232,10 @@ public class DataNodeOperations {
             // return the node toInsert along with the node shifted to the right.
             return Lists.newArrayList(
                     toInsert,
-                    new DataNode.AddNode(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
                             toInsertInto.indexStart() + toInsert.length(),
-                            toInsertInto.indexEnd() + toInsert.length(),
-                            true
+                            toInsertInto.indexEnd() + toInsert.length()
                     )
             );
         }
@@ -299,10 +301,10 @@ public class DataNodeOperations {
 //        }
 
         return Lists.newArrayList(
-                new DataNode.AddNode(
+                DataNode.DataNodeFactory.fromNode(
+                        toInsertInto,
                         toInsertInto.indexStart() + toInsert.length(),
-                        toInsertInto.indexEnd() + toInsert.length(),
-                        true
+                        toInsertInto.indexEnd() + toInsert.length()
                 )
         );
     }
