@@ -25,8 +25,6 @@ import java.util.*;
  * * - - - - - - - - - - *
  * | Header Op Indices   | - Pointers to the changes made, each pointer 12 bytes * 4 (see HeaderOpIndices) + a.
  * * - - - - - - - - - - *
- * |    Content         |  - Initial content added.
- * * - - - - - - - - - - *
  * |    Operations Data |  - Changes made since last compression.
  * * - - - - - - - - - - *
  * There exist no Remove. The indices are of 12 bytes, allowing for max file size
@@ -103,7 +101,7 @@ public class SkipFileOperations implements FileOperations {
     public Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path) {
         var fileHeader = getFileAndHeader(path.getPath());
         if (fileHeader.isError()) {
-            return Flux.just(Result.err(new FileEventSourceActions.FileEventError("Could not find path.")));
+            return Flux.just(Result.err(new FileEventSourceActions.FileEventError("Could not find path for %s.".formatted(path))));
         }
         return Flux.fromStream(fileHeader.stream())
                 .flatMap(fileData -> Flux.using(
