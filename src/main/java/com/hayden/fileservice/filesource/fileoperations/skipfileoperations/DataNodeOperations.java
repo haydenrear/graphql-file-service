@@ -6,6 +6,7 @@ import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -20,18 +21,20 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @Slf4j
 public class DataNodeOperations {
 
-    public FileHeader.HeaderDescriptor insertNode(FileHeader.HeaderDescriptor inIndices,
-                                                  FileChangeEventInput eventInput) {
+    public Result<FileHeader.HeaderDescriptor, FileEventSourceActions.FileEventError> insertNode(FileHeader.HeaderDescriptor inIndices,
+                                                                                                 FileChangeEventInput eventInput) {
         var nodeType = getDataNode(eventInput, inIndices).get();
         List<DataNode> existingNodes = new ArrayList<>(inIndices.inIndices());
         if (nodeType instanceof DataNode.AddNode) {
             var updateNodes = insertNodes(existingNodes, nodeType);
-            return new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData());
+            return Result.ok(new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData()));
         }
-        else {
+        else if (nodeType instanceof DataNode.SkipNode) {
             var updateNodes = removeNodes(existingNodes, nodeType);
-            return new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData());
+            return Result.ok(new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData()));
         }
+
+        return Result.err(new FileEventSourceActions.FileEventError("Did not recognize node type: %s.".formatted(nodeType)));
     }
 
     /**

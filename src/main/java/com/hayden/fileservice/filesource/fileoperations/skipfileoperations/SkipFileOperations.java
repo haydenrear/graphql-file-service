@@ -69,7 +69,10 @@ public class SkipFileOperations implements FileOperations {
 
     private Result<FileMetadata, FileEventSourceActions.FileEventError> doAddRemoveFileOp(FileChangeEventInput input) {
         return getFileAndHeader(input.getPath())
-                .map(headerOps -> Map.entry(headerOps.getKey(), dataNodeOperations.insertNode(headerOps.getValue(), input)))
+                .flatMapResult(headerOps -> dataNodeOperations.insertNode(headerOps.getValue(), input)
+                        .mapError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
+                        .map(h -> Map.entry(headerOps.getKey(), h))
+                )
                 .flatMapResult(h -> FileHelpers.fileMetadata(h.getKey(), input.getChangeType()));
     }
 
