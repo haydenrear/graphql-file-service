@@ -3,12 +3,12 @@ package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
+import com.hayden.utilitymodule.ByteUtility;
 import com.hayden.utilitymodule.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +40,7 @@ class HeaderOperationTypesTest {
         byte[] ok = new byte[] {
                 1,2,3,4,5,1,2,4,5,1,2,3,4,5,1,2
         };
-        List<byte[]> bytes = HeaderOperationTypes.splitByteArrayByByteValue(new byte[]{1, 2}, ok, false);
+        List<byte[]> bytes = ByteUtility.splitByteArrayByByteValue(new byte[]{1, 2}, ok, false);
         System.out.println(bytes);
     }
 

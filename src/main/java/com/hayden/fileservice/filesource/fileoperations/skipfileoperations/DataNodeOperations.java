@@ -7,6 +7,7 @@ import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -23,8 +24,14 @@ public class DataNodeOperations {
                                                   FileChangeEventInput eventInput) {
         var nodeType = getDataNode(eventInput, inIndices).get();
         List<DataNode> existingNodes = new ArrayList<>(inIndices.inIndices());
-        var updateNodes = insertNodes(existingNodes, nodeType);
-        return new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData());
+        if (nodeType instanceof DataNode.AddNode) {
+            var updateNodes = insertNodes(existingNodes, nodeType);
+            return new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData());
+        }
+        else {
+            var updateNodes = removeNodes(existingNodes, nodeType);
+            return new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData());
+        }
     }
 
     /**
@@ -56,6 +63,27 @@ public class DataNodeOperations {
         return outNodes;
     }
 
+    private List<DataNode> removeNodes(List<DataNode> existingNodes, DataNode nodeType) {
+
+        var outNodes = new ArrayList<DataNode>();
+        List<DataNode> last = null;
+        Queue<DataNode> lastItem = new ConcurrentLinkedQueue<>();
+        boolean inserted = false;
+
+        for (var v : existingNodes) {
+            Pair<Boolean, List<DataNode>> c = splitRemove(v, nodeType, last, lastItem, inserted);
+            outNodes.addAll(c.getRight());
+            last = c.getRight();
+            lastItem.add(v);
+            inserted  = c.getKey();
+        }
+
+        if (!inserted)
+            outNodes.add(nodeType);
+
+        return outNodes;
+    }
+
     public List<DataNode> splitNode(DataNode toInsertInto, DataNode toInsert,
                                     List<DataNode> last, Queue<DataNode> lastItem,
                                     boolean inserted) {
@@ -66,8 +94,159 @@ public class DataNodeOperations {
         }
     }
 
+    public Pair<Boolean, List<DataNode>> splitRemove(DataNode toInsertInto, DataNode toInsert,
+                                                     List<DataNode> last, Queue<DataNode> lastItem,
+                                                     boolean inserted) {
+        if (!inserted) {
+            return doBeforeRemove(toInsertInto, toInsert);
+        } else {
+            return doAfterRemove(toInsertInto, toInsert, lastItem.poll(), last.getLast());
+        }
+    }
+
     private static void writeNotSupportedCaseLog(DataNode toInsertInto, DataNode toInsert) {
         log.error("Found case not supported: toInsert, {} toInsertInto {}.", toInsert, toInsertInto);
+    }
+
+    private static @NotNull Pair<Boolean, List<DataNode>> doBeforeRemove(DataNode toInsertInto, DataNode toInsert) {
+        if (isFirstOverlappingAllSecond(toInsert, toInsertInto)) {
+            // return none as the whole node is removed.
+            return Pair.of(false, Lists.newArrayList());
+        }
+
+        if (isSecondNodeFullyBeforeFirstNode(toInsert, toInsertInto)) {
+            return Pair.of(false, Lists.newArrayList(toInsertInto));
+        }
+
+        if (isSecondNodeFullyAfterFirstNode(toInsert, toInsertInto, Math.toIntExact(toInsert.length()))) {
+            return Pair.of(true, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart() - toInsert.length(),
+                            toInsertInto.indexEnd() - toInsert.length()
+                    )
+            ));
+        }
+
+        if (isFirstNodeFullyWithinSecondNode(toInsert, toInsertInto)) {
+            return Pair.of(true, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart(),
+                            toInsert.indexStart()
+                    ),
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsert.indexStart(),
+                            toInsertInto.indexEnd() - toInsert.length()
+                    )
+            ));
+        }
+
+        if (isFirstLeftFlushOverlappingRightSecond(toInsert, toInsertInto)) {
+            // shift the node by the amount of the insert - only return toInsertInto node, as the toInsert node will
+            // be returned once it ends.
+            return Pair.of(false, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart() - toInsert.length(),
+                            toInsert.indexEnd() - toInsert.length()
+                    )
+            ));
+        }
+
+        if (isFirstRightFlushOverlappingLeftSecond(toInsert, toInsertInto)) {
+            // return the node toInsert along with the node being overlapped shifted.
+            return Pair.of(true, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart() - toInsert.length(),
+                            toInsert.indexEnd() - toInsert.length()
+                    )
+            ));
+        }
+
+        if (isFirstLeftFlushSecond(toInsert, toInsertInto)) {
+            // return the node with skip removed
+            return Pair.of(true, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart(),
+                            toInsertInto.indexEnd() - toInsert.length()
+                    )
+            ));
+        }
+
+        if (isFirstRightFlushSecond(toInsert, toInsertInto)) {
+            // return two new nodes
+            return Pair.of(false, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart(),
+                            toInsertInto.indexStart() + (toInsertInto.length() - toInsert.length())
+                    )
+            ));
+        }
+
+        if (isFirstRightAlterFlushSecond(toInsert, toInsertInto)) {
+            return Pair.of(true, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart() - toInsert.length(),
+                            toInsertInto.indexEnd() - toInsert.length()
+                    )
+            ));
+        }
+
+        if (isFirstLeftAlterFlushSecond(toInsert, toInsertInto)) {
+            return Pair.of(false, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart(),
+                            toInsertInto.indexEnd()
+                    )
+            ));
+        }
+
+        if (isFirstAllFlushSecond(toInsert, toInsertInto)) {
+            return Pair.of(false, Lists.newArrayList());
+        }
+
+        if (isFirstOverlappingRightSecond(toInsert, toInsertInto)) {
+            // return up until the skip node
+            return Pair.of(false, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsertInto.indexStart(),
+                            toInsert.indexStart()
+                    )
+            ));
+        }
+
+        if (isFirstOverlappingLeftSecond(toInsert, toInsertInto)) {
+            // return after skip node
+            long newLength = toInsertInto.indexEnd() - toInsert.indexEnd();
+            return Pair.of(true, Lists.newArrayList(
+                    DataNode.DataNodeFactory.fromNode(
+                            toInsertInto,
+                            toInsert.indexStart(),
+                            toInsert.indexStart() + newLength
+                    )
+            ));
+        }
+
+        writeNotSupportedCaseLog(toInsertInto, toInsert);
+        return Pair.of(false, new ArrayList<>());
+    }
+
+    private static @Nullable Pair<Boolean, List<DataNode>> doAfterRemove(DataNode toInsertInto, DataNode toInsert, DataNode lastLast, DataNode last) {
+        return Pair.of(true, Lists.newArrayList(
+                DataNode.DataNodeFactory.fromNode(
+                        toInsertInto,
+                        toInsertInto.indexStart() - toInsert.length(),
+                        toInsertInto.indexEnd() - toInsert.length()
+                )
+        ));
     }
 
     private static @NotNull ArrayList<DataNode> doBeforeInsert(DataNode toInsertInto, DataNode toInsert) {
@@ -79,7 +258,7 @@ public class DataNodeOperations {
                             toInsertInto,
                             toInsertInto.indexStart() + toInsert.length(),
                             toInsertInto.indexEnd() + toInsert.length()
-                            )
+                    )
             );
         }
 
@@ -245,61 +424,6 @@ public class DataNodeOperations {
     }
 
     private static @Nullable ArrayList<DataNode> doAfterInsert(DataNode toInsertInto, DataNode toInsert, DataNode lastLast, DataNode last) {
-//        if (isFirstOverlappingAllSecond(toInsertInto, last)) {
-//
-//        }
-//
-//        if (isSecondNodeFullyBeforeFirstNode(toInsertInto, last)) {
-//        }
-//
-//        //
-//        if (isSecondNodeFullyAfterFirstNode(toInsertInto, last, Math.toIntExact(toInsert.length()))) {
-//        }
-//
-//        if (isFirstNodeFullyWithinSecondNode(toInsertInto, last)) {
-//            System.out.println();
-//            // split into three nodes
-//        }
-//
-////        if (isFirstAllFlushSecond(toInsertInto, last)) {
-////            System.out.println();
-////            // split into three nodes
-////        }
-//
-//        if (isFirstLeftFlushOverlappingRightSecond(toInsert, toInsertInto)) {
-//            // shift the node by the amount of the insert - only return toInsertInto node, as the toInsert node will
-//            // be returned once it ends.
-//        }
-//
-//        if (isFirstRightFlushOverlappingLeftSecond(toInsert, toInsertInto)) {
-//            // return the node toInsert along with the node being overlapped shifted.
-//        }
-//
-//        if (isFirstLeftFlushSecond(toInsert, toInsertInto)) {
-//            // return two new nodes
-//        }
-//
-//        if (isFirstRightFlushSecond(toInsert, toInsertInto)) {
-//            // return two new nodes
-//        }
-//
-//        if (isFirstOverlappingRightSecond(toInsert, toInsertInto)) {
-//            // return two nodes, the first is before the overlap up to the overlap start. The second is starting at
-//            // (the overlap start + length of toInsert) and ending at (length of toInsert + length of second part)
-//            // (the overlap start + length of toInsert) and ending at (length of toInsert + length of second part)
-//        }
-
-//        if (isFirstOverlappingLeftSecond(toInsert, toInsertInto)) {
-//            // return the node toInsert along with the node shifted to the right.
-//            return Lists.newArrayList(
-//                    new DataNode.AddNode(
-//                            toInsertInto.indexStart() + toInsert.length(),
-//                            toInsertInto.indexEnd() + toInsert.length(),
-//                            true
-//                    )
-//            );
-//        }
-
         return Lists.newArrayList(
                 DataNode.DataNodeFactory.fromNode(
                         toInsertInto,

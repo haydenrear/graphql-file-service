@@ -3,11 +3,13 @@ package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
+import com.hayden.utilitymodule.ByteUtility;
 import com.hayden.utilitymodule.result.Result;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 public enum HeaderOperationTypes {
@@ -83,87 +85,52 @@ public enum HeaderOperationTypes {
         i += startPosCounter;
         return i;
     }
-    public static List<byte[]> splitByteArrayByByteValue(byte[] toSplitBy, byte[] toSplit) {
-        return splitByteArrayByByteValue(toSplitBy, toSplit, true) ;
-    }
-
-    public static List<byte[]> splitByteArrayByByteValue(byte[] toSplitBy, byte[] toSplit, boolean include) {
-        int counter = 0;
-        int i = -1;
-        List<byte[]> result = new ArrayList<>();
-        while (counter < toSplit.length) {
-            if (bytesMatch(toSplitBy, toSplit, counter)) {
-                if (i == -1) {
-                    i = counter;
-                    if (counter != 0) {
-                        byte[] out = new byte[counter];
-                        System.arraycopy(toSplit, 0, out, 0, counter);
-                        result.add(out);
-                    }
-                } else {
-                    if (include) {
-                        byte[] out = new byte[counter - i];
-                        System.arraycopy(toSplit, i, out, 0, counter - i);
-                        result.add(out);
-                    } else {
-                        byte[] out = new byte[counter - i - toSplitBy.length];
-                        System.arraycopy(toSplit, i + toSplitBy.length , out, 0, counter - i - toSplitBy.length);
-                        result.add(out);
-                    }
-                    i = counter;
-                }
-            }
-            counter += 1;
-        }
-
-        if (bytesMatch(toSplitBy, toSplit, i)) {
-            if (i != -1) {
-                if (include) {
-                    byte[] out = new byte[counter - i];
-                    System.arraycopy(toSplit, i, out, 0, counter - i);
-                    result.add(out);
-                } else if (toSplitBy.length != toSplit.length) {
-                    byte[] out = new byte[counter - i - toSplitBy.length];
-                    System.arraycopy(toSplit, i + toSplitBy.length , out, 0, counter - i - toSplitBy.length );
-                    result.add(out);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private static boolean bytesMatch(byte[] toSplitBy, byte[] toSplit, int counter) {
-        for (int j = 0; j < toSplitBy.length; j++) {
-            if (toSplit[counter + j] != toSplitBy[j]) return false;
-        }
-        return true;
-    }
 
     public static @NotNull Result<FileHeader.HeaderDescriptor, FileEventSourceActions.FileEventError> getOps(byte[] header) {
         byte[] bytes = DataStreamFileDelim.BETWEEN_HEADER_OPS.fileDelims.getBytes();
-        List<byte[]> eachHeaderOp = splitByteArrayByByteValue(bytes, header, false);
-        eachHeaderOp.forEach(eachHeader -> {
-            byte[] starting = DataStreamFileDelim.INTRA_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes();
-            List<byte[]> headerIndices = splitByteArrayByByteValue(starting, eachHeader, false);
-            if (headerIndices.size() == 0) {
-                return;
-            }
-            byte[] first = headerIndices.get(0);
-            if(isAddOrRemove("a".getBytes(), first)) {
-                List<byte[]> split = splitByteArrayByByteValue("a".getBytes(), first, false);
-                split.forEach(toSplit -> {
-                    List<byte[]> eachIndex = splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
-                    eachIndex.forEach(item -> {
-                        long l = NumberEncoder.decodeNumber(item);
-                    });
-                });
-
-            }
-            if(isAddOrRemove("s".getBytes(), first)) {
-                List<byte[]> split = splitByteArrayByByteValue("s".getBytes(), first, false);
-            }
-        });
+        List<byte[]> eachHeaderOp = ByteUtility.splitByteArrayByByteValue(bytes, header, false);
+        var out = eachHeaderOp.stream()
+                .flatMap(eachHeader -> {
+                    byte[] starting = DataStreamFileDelim.INTRA_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes();
+                    try {
+                        List<byte[]> headerIndices = ByteUtility.splitByteArrayByByteValue(starting, eachHeader, false);
+                        if (headerIndices.isEmpty()) {
+                            return Stream.empty();
+                        }
+                        byte[] first = headerIndices.get(0);
+                        if (isAddOrRemove("a".getBytes(), first)) {
+                            List<byte[]> split = ByteUtility.splitByteArrayByByteValue("a".getBytes(), first, false);
+                            return split.stream().map(toSplit -> {
+                                List<byte[]> eachIndex = ByteUtility.splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
+                                return new DataNode.AddNode(
+                                        NumberEncoder.decodeNumber(eachIndex.get(0)),
+                                        NumberEncoder.decodeNumber(eachIndex.get(1)),
+                                        NumberEncoder.decodeNumber(eachIndex.get(2)),
+                                        NumberEncoder.decodeNumber(eachIndex.get(3)),
+                                        false
+                                );
+                            });
+                        }
+                        if (isAddOrRemove("s".getBytes(), first)) {
+                            List<byte[]> split = ByteUtility.splitByteArrayByByteValue("s".getBytes(), first, false);
+                            return split.stream().map(toSplit -> {
+                                List<byte[]> eachIndex = ByteUtility.splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
+                                return new DataNode.SkipNode(
+                                        NumberEncoder.decodeNumber(eachIndex.get(0)),
+                                        NumberEncoder.decodeNumber(eachIndex.get(1)),
+                                        NumberEncoder.decodeNumber(eachIndex.get(2)),
+                                        NumberEncoder.decodeNumber(eachIndex.get(3)),
+                                        false
+                                );
+                            });
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        return Stream.empty();
+                    }
+                    return Stream.empty();
+                })
+                .toList();
+        System.out.println(out);
 
 //        String[] descriptorData = forDescriptor[0].split(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims);
 //        if (Optional.of(descriptorData).map(s -> s.length != 2).orElse(false)) {

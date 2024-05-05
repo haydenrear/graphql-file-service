@@ -26,7 +26,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate removing content in the middle of the file
-        FileChangeEventInput eventInput = createRemoveContent(40, 40);
+        FileChangeEventInput eventInput = createAdd(40, 40);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 Lists.newArrayList(
                         new DataNode.AddNode(0, 10, 0, 20, true),
@@ -44,7 +44,7 @@ class DataNodeOperationsTest {
     public void testInsertBeforeExistingNode() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.SkipNode(0, 10, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, true));
         existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
         existingNodes.add(new DataNode.AddNode(20, 30, 100, 110, true));
         existingNodes.add(new DataNode.AddNode(30, 40, 110, 120, true));
@@ -52,13 +52,13 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 45));
 
         // Simulate inserting data before the first existing node
-        FileChangeEventInput eventInput = createAddContent(5, 5);
+        FileChangeEventInput eventInput = createAdd(5, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.SkipNode(0, 5, true),
+                        new DataNode.AddNode(0, 5, true),
                         new DataNode.AddNode(5, 10, 120, 125, true),
-                        new DataNode.SkipNode(10, 15, true),
-                        new DataNode.SkipNode(15, 25, true),
+                        new DataNode.AddNode(10, 15, true),
+                        new DataNode.AddNode(15, 25, true),
                         new DataNode.AddNode(25, 35, 100, 110, true),
                         new DataNode.AddNode(35, 45, 110, 120, true)
                 ),
@@ -69,13 +69,40 @@ class DataNodeOperationsTest {
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
-    private static @NotNull FileChangeEventInput createAddContent(int offset, int length) {
-        FileChangeEventInput eventInput = new FileChangeEventInput("test", FileChangeType.ADD_CONTENT, offset, new ByteArray(new byte[0]), "", length);
+    @Test
+    public void testRemoveBefore() {
+        // Create initial state with some existing nodes
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
+        existingNodes.add(new DataNode.AddNode(20, 30, 100, 110, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 110, 120, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 45));
+
+        // Simulate inserting data before the first existing node
+        FileChangeEventInput eventInput = createRemove(5, 5);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                List.of(
+                        new DataNode.AddNode(0, 5, true),
+                        new DataNode.AddNode(5, 15, true),
+                        new DataNode.AddNode(15, 25, true),
+                        new DataNode.AddNode(25, 35, 100, 110, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 45));
+
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    private static @NotNull FileChangeEventInput createRemove(int offset, int length) {
+        FileChangeEventInput eventInput = new FileChangeEventInput("test", FileChangeType.REMOVE_CONTENT, offset, new ByteArray(new byte[0]), "", length);
         return eventInput;
     }
 
-    private static @NotNull FileChangeEventInput createRemoveContent(int offset, int length) {
-        FileChangeEventInput eventInput = new FileChangeEventInput("test", FileChangeType.REMOVE_CONTENT, offset, new ByteArray(new byte[0]), "", length);
+    private static @NotNull FileChangeEventInput createAdd(int offset, int length) {
+        FileChangeEventInput eventInput = new FileChangeEventInput("test", FileChangeType.ADD_CONTENT, offset, new ByteArray(new byte[0]), "", length);
         return eventInput;
     }
 
@@ -91,7 +118,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate inserting data after the first existing node
-        FileChangeEventInput eventInput = createAddContent(20, 5);
+        FileChangeEventInput eventInput = createAdd(20, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
                         new DataNode.AddNode(0, 10, 0, 10, true),
@@ -111,7 +138,7 @@ class DataNodeOperationsTest {
     public void testRemoveContentAtBeginning() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.SkipNode(0, 10, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, true));
         existingNodes.add(new DataNode.AddNode(10, 20, 0, 10, true));
         existingNodes.add(new DataNode.AddNode(20, 30, 0, 10, true));
         existingNodes.add(new DataNode.AddNode(30, 40, 10, 20, true));
@@ -119,11 +146,11 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate removing content at the beginning of the file
-        FileChangeEventInput eventInput = createRemoveContent(0, 5);
+        FileChangeEventInput eventInput = createAdd(0, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.SkipNode(0, 5, true),
-                        new DataNode.SkipNode(5, 15, true),
+                        new DataNode.AddNode(0, 5, true),
+                        new DataNode.AddNode(5, 15, true),
                         new DataNode.AddNode(15, 25, 5, 10, true),
                                 new DataNode.AddNode(25, 35, 5, 10, true),
                         new DataNode.AddNode(35, 45, 10, 20, true)
@@ -141,7 +168,7 @@ class DataNodeOperationsTest {
         // Create initial state with some existing nodes
         IntStream.range(2, 100).boxed().filter(i -> i == 10).forEach(i -> {
             List<DataNode> existingNodes = new ArrayList<>();
-            existingNodes.add(new DataNode.SkipNode(0, 10, true));
+            existingNodes.add(new DataNode.AddNode(0, 10, true));
             existingNodes.add(new DataNode.AddNode(10, 20, 0, 10, true));
             existingNodes.add(new DataNode.AddNode(20, 30, 0, 10, true));
             existingNodes.add(new DataNode.AddNode(30, 40, 10, 20, true));
@@ -149,12 +176,12 @@ class DataNodeOperationsTest {
                     new FileHeader.HeaderDescriptorData(0, 40));
 
             // Simulate removing content at the beginning of the file
-            FileChangeEventInput eventInput = createRemoveContent(0, i);
+            FileChangeEventInput eventInput = createAdd(0, i);
             FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                     List.of(
-                            new DataNode.SkipNode(0, i, true),
-                            new DataNode.SkipNode(i, i + 10, true),
-                            new DataNode.SkipNode(i + 10, i + 20, true),
+                            new DataNode.AddNode(0, i, true),
+                            new DataNode.AddNode(i, i + 10, true),
+                            new DataNode.AddNode(i + 10, i + 20, true),
                             new DataNode.AddNode( i + 20,  i + 30, 5, 10, true),
                             new DataNode.AddNode(i + 30, i + 40, 5, 10, true)
                     ),
@@ -168,6 +195,7 @@ class DataNodeOperationsTest {
     }
 
 
+
     @Test
     public void testRemoveContentInMiddle() {
         // Create initial state with some existing nodes
@@ -179,7 +207,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate removing content in the middle of the file
-        FileChangeEventInput eventInput = createRemoveContent(15, 10);
+        FileChangeEventInput eventInput = createAdd(15, 10);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
                         new DataNode.AddNode(0, 10, 0, 20, true),
@@ -206,7 +234,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate removing content in the middle of the file
-        FileChangeEventInput eventInput = createRemoveContent(15, 20);
+        FileChangeEventInput eventInput = createAdd(15, 20);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
                         new DataNode.AddNode(0, 10, 0, 20, true),
@@ -234,7 +262,7 @@ class DataNodeOperationsTest {
                     new FileHeader.HeaderDescriptorData(0, 40));
 
             // Simulate removing content in the middle of the file
-            FileChangeEventInput eventInput = createRemoveContent(15, i);
+            FileChangeEventInput eventInput = createAdd(15, i);
             FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                     Lists.newArrayList(
                             new DataNode.AddNode(0, 10, 0, 20, true),
@@ -251,6 +279,145 @@ class DataNodeOperationsTest {
     }
 
     @Test
+    public void testRemoveContentRemovalInMiddleBiggest() {
+        // Create initial state with some existing nodes
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 40));
+
+        // Simulate removing content in the middle of the file
+        FileChangeEventInput eventInput = createRemove(15, 5);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 10, 0, 20, true),
+                        new DataNode.AddNode(10, 15, 0, 10, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+        expectedOutput.inIndices().add(new DataNode.AddNode(15, 25 , 0, 10, true));
+        expectedOutput.inIndices().add(new DataNode.AddNode(25 , 35 , 0, 10, true));
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    @Test
+    public void testRemoveContentRemovalInMiddleBigger() {
+        // Create initial state with some existing nodes
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 40));
+
+        // Simulate removing content in the middle of the file
+        FileChangeEventInput eventInput = createRemove(5, 20);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 5, 0, 20, true),
+                        new DataNode.AddNode(5, 10, 0, 10, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+        expectedOutput.inIndices().add(new DataNode.AddNode(10, 20 , 0, 10, true));
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    @Test
+    public void testRemoveContentRemovalInMiddleBiggestRemove() {
+        // Create initial state with some existing nodes
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 40));
+
+        // Simulate removing content in the middle of the file
+        FileChangeEventInput eventInput = createRemove(7, 30);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 7, 0, 20, true),
+                        new DataNode.AddNode(7, 10, 0, 10, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    @Test
+    public void testRemoveContentRemovalInMiddleSmallerRemove() {
+        // Create initial state with some existing nodes
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 5));
+
+        // Simulate removing content in the middle of the file
+        FileChangeEventInput eventInput = createRemove(7, 3);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 7, 0, 20, true),
+                        new DataNode.AddNode(7, 27, 0, 10, true),
+                        new DataNode.AddNode(27, 37, 0, 20, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+
+        existingNodes = new ArrayList<DataNode>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 5));
+
+        // Simulate removing content in the middle of the file
+        eventInput = createRemove(30, 3);
+        expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 10, 0, 20, true),
+                        new DataNode.AddNode(10, 30, 0, 10, true),
+                        new DataNode.AddNode(30, 37, 0, 20, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+        // Call the method and assert the result
+        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+
+
+        existingNodes = new ArrayList<DataNode>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 5));
+
+        // Simulate removing content in the middle of the file
+        eventInput = createRemove(35, 3);
+        expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 10, 0, 20, true),
+                        new DataNode.AddNode(10, 30, 0, 10, true),
+                        new DataNode.AddNode(30, 35, 0, 20, true),
+                        new DataNode.AddNode(35, 37, 0, 20, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+        // Call the method and assert the result
+        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    @Test
     public void testRemoveContentInMiddleSmaller() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
@@ -261,7 +428,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate removing content in the middle of the file
-        FileChangeEventInput eventInput = createRemoveContent(15, 5);
+        FileChangeEventInput eventInput = createAdd(15, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
                         new DataNode.AddNode(0, 10, 0, 20, true),
@@ -288,7 +455,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Simulate removing content in the middle of the file
-        FileChangeEventInput eventInput = createRemoveContent(15, 3);
+        FileChangeEventInput eventInput = createAdd(15, 3);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
                         new DataNode.AddNode(0, 10, 0, 20, true),
