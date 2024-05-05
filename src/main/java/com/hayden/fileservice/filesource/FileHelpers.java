@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -27,10 +28,23 @@ public interface FileHelpers {
     }
 
     static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input, File nextFile) {
-        try(FileOutputStream fos = new FileOutputStream(nextFile))  {
+        return createFile(input, nextFile, 0);
+    }
+
+    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input, File nextFile, long startingOffset) {
+        try(var fos = new RandomAccessFile(nextFile, "w"))  {
+            fos.seek(startingOffset);
             fos.write(input.getData().getBytes());
         } catch (IOException e) {
             return fileMetadata(e);
+        }
+
+        return fileMetadata(nextFile, input.getChangeType());
+    }
+
+    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> deleteFile(FileChangeEventInput input, File nextFile) {
+        if (!nextFile.delete()) {
+            return Result.err(new FileEventSourceActions.FileEventError("Could not delete %s.".formatted(nextFile)));
         }
 
         return fileMetadata(nextFile, input.getChangeType());

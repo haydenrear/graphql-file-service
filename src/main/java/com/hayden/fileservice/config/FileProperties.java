@@ -11,4 +11,20 @@ public class FileProperties {
 
     int bufferSize = 1024;
 
+    /**
+     * Number of bytes to assign to the header.
+     */
+    long dataStreamFileHeaderLengthBytes;
+
+    /**
+     * The size of the data in a header operation that automatically forces condense.
+     */
+    long sizeDataStreamFileOperationForceCondense;
+
+    /**
+     * The threshold percentage of the total data in a header operation compared to the total data in the file before
+     * for which condense will automatically be triggered.
+     */
+    float percentageOfFileSizeOperationForceCondense;
+
 }

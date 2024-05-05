@@ -5,6 +5,7 @@ import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.config.FileProperties;
+import com.hayden.fileservice.filesource.fileoperations.naive.LocalNaiveFileOperations;
 import com.hayden.fileservice.io.FileStream;
 import com.hayden.utilitymodule.io.FileUtils;
 import org.jetbrains.annotations.NotNull;

@@ -1,16 +1,16 @@
-package com.hayden.fileservice.filesource;
+package com.hayden.fileservice.filesource.fileoperations;
 
 import com.hayden.fileservice.codegen.types.*;
+import com.hayden.fileservice.filesource.directoroperations.DirectoryOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.reactivestreams.Publisher;
 
 import java.io.File;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
-public interface FileOperations {
+public interface FileOperations extends DirectoryOperations {
 
     Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input);
 
@@ -22,12 +22,11 @@ public interface FileOperations {
 
     Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(FileSearch path);
 
-    Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path);
-
-    @NotNull Stream<File> search(String path, @Nullable String fileName);
-
-    default @NotNull Stream<File> search(String path) {
-        return this.search(path, null);
+    default @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> doOnFile(FileChangeEventInput input,
+                                                                                         Function<File, Result<FileMetadata, FileEventSourceActions.FileEventError>> toDoOnFile, String errorMessage) {
+        return search(input.getPath()).findAny()
+                .map(toDoOnFile)
+                .orElse(Result.err(new FileEventSourceActions.FileEventError(errorMessage)));
     }
 
 }

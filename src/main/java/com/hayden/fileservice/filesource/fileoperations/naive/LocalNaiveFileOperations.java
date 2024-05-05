@@ -1,26 +1,25 @@
-package com.hayden.fileservice.filesource;
+package com.hayden.fileservice.filesource.fileoperations.naive;
 
 import com.hayden.fileservice.codegen.types.*;
 import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.config.FileProperties;
+import com.hayden.fileservice.filesource.FileHelpers;
+import com.hayden.fileservice.filesource.fileoperations.FileOperations;
+import com.hayden.fileservice.filesource.directoroperations.LocalDirectoryOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.fileservice.io.FileStream;
 import com.hayden.utilitymodule.result.Result;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Delegate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Stream;
+
 import reactor.core.publisher.Flux;
 
 
@@ -31,6 +30,9 @@ public class LocalNaiveFileOperations implements FileOperations {
     private final FileStream fileStream;
 
     private final FileProperties fileProperties;
+
+    @Delegate
+    private final LocalDirectoryOperations localDirectoryOperations;
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input) {
@@ -75,26 +77,6 @@ public class LocalNaiveFileOperations implements FileOperations {
                 });
     }
 
-    @Override
-    public Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
-        return Flux.fromStream(
-                this.search(path.getPath(), path.getFileName())
-                        .map(nextFile -> FileHelpers.fileMetadata(nextFile, FileChangeType.EXISTING))
-        );
-    }
-
-    @Override
-    public @NotNull Stream<File> search(String path, @Nullable String fileName) {
-        File file = Paths.get(path).toFile();
-        return file.isDirectory()
-                ? Optional.ofNullable(file.listFiles())
-                .stream().flatMap(Arrays::stream)
-                .filter(f -> Optional.ofNullable(fileName)
-                        .map(fileNameFilter -> fileNameFilter.equals(f.getName()))
-                        .orElse(true)
-                )
-                : Optional.of(file).stream();
-    }
 
     private static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> addContent(FileChangeEventInput input, File nextFile) {
         int offset = input.getOffset();
@@ -119,7 +101,8 @@ public class LocalNaiveFileOperations implements FileOperations {
         return FileHelpers.fileMetadata(nextFile, input.getChangeType());
     }
 
-    @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> removeContent(FileChangeEventInput input, File nextFile, int bufferSize) {
+    @NotNull
+    public Result<FileMetadata, FileEventSourceActions.FileEventError> removeContent(FileChangeEventInput input, File nextFile, int bufferSize) {
         int offset = input.getOffset();
         try (RandomAccessFile file = new RandomAccessFile(nextFile, "rw")) {
             // Move the file pointer to the position
@@ -150,11 +133,5 @@ public class LocalNaiveFileOperations implements FileOperations {
         return FileHelpers.fileMetadata(nextFile, input.getChangeType());
     }
 
-    private @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> doOnFile(FileChangeEventInput input,
-                                                                                          Function<File, Result<FileMetadata, FileEventSourceActions.FileEventError>> toDoOnFile, String errorMessage) {
-        return search(input.getPath()).findAny()
-                .map(toDoOnFile)
-                .orElse(Result.err(new FileEventSourceActions.FileEventError(errorMessage)));
-    }
 
 }
