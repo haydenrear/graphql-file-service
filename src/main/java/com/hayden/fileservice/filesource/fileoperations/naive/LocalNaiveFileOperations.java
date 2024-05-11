@@ -12,6 +12,7 @@ import com.hayden.utilitymodule.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import reactor.core.publisher.Flux;
 
@@ -28,11 +30,18 @@ import reactor.core.publisher.Flux;
 public class LocalNaiveFileOperations implements FileOperations {
 
     private final FileStream fileStream;
-
     private final FileProperties fileProperties;
-
-    @Delegate
     private final LocalDirectoryOperations localDirectoryOperations;
+
+    @Override
+    public Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
+        return this.localDirectoryOperations.getMetadata(path);
+    }
+
+    @Override
+    public Stream<File> search(String path, @Nullable String fileName) {
+        return this.localDirectoryOperations.search(path, fileName);
+    }
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input) {

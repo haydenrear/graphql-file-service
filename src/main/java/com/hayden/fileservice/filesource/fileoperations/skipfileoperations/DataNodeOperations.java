@@ -81,9 +81,6 @@ public class DataNodeOperations {
             inserted  = c.getKey();
         }
 
-        if (!inserted)
-            outNodes.add(nodeType);
-
         return outNodes;
     }
 
@@ -136,12 +133,16 @@ public class DataNodeOperations {
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart()
+                            toInsert.indexStart(),
+                            toInsertInto.dataStart(),
+                            toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart())
                     ),
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsert.indexStart(),
-                            toInsertInto.indexEnd() - toInsert.length()
+                            toInsertInto.indexEnd() - toInsert.length(),
+                            (toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart())) + toInsert.length(),
+                            toInsertInto.dataEnd()
                     )
             ));
         }
@@ -175,7 +176,9 @@ public class DataNodeOperations {
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsertInto.indexEnd() - toInsert.length()
+                            toInsertInto.indexEnd() - toInsert.length(),
+                            toInsertInto.indexStart() + toInsert.length(),
+                            toInsertInto.dataEnd()
                     )
             ));
         }
@@ -186,7 +189,9 @@ public class DataNodeOperations {
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsertInto.indexStart() + (toInsertInto.length() - toInsert.length())
+                            toInsertInto.indexStart() + (toInsertInto.length() - toInsert.length()),
+                            toInsertInto.dataStart(),
+                            toInsertInto.dataStart() + (toInsertInto.length() - toInsert.length())
                     )
             ));
         }
@@ -221,7 +226,9 @@ public class DataNodeOperations {
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart()
+                            toInsert.indexStart(),
+                            toInsertInto.dataStart(),
+                            toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart())
                     )
             ));
         }
@@ -233,7 +240,9 @@ public class DataNodeOperations {
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsert.indexStart(),
-                            toInsert.indexStart() + newLength
+                            toInsert.indexStart() + newLength,
+                            toInsertInto.dataStart() + (toInsert.indexEnd() - toInsertInto.indexStart()),
+                            toInsertInto.dataEnd()
                     )
             ));
         }

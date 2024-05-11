@@ -5,6 +5,7 @@ import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.config.FileProperties;
+import com.hayden.fileservice.filesource.directoroperations.LocalDirectoryOperations;
 import com.hayden.fileservice.filesource.fileoperations.naive.LocalNaiveFileOperations;
 import com.hayden.fileservice.io.FileStream;
 import com.hayden.utilitymodule.io.FileUtils;
@@ -32,7 +33,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@SpringBootTest(classes = {LocalNaiveFileOperations.class, FileStream.class, FileProperties.class})
+@SpringBootTest(classes = {LocalNaiveFileOperations.class, FileStream.class, FileProperties.class, LocalDirectoryOperations.class})
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(FileProperties.class)
 class LocalNaiveFileOperationsTest {

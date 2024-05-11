@@ -1,6 +1,7 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 
 import com.hayden.fileservice.codegen.types.*;
+import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.FileHelpers;
 import com.hayden.fileservice.filesource.fileoperations.FileOperations;
@@ -10,13 +11,18 @@ import com.hayden.utilitymodule.result.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * File is like:
@@ -40,15 +46,28 @@ public class SkipFileOperations implements FileOperations {
     private final FileProperties fileProperties;
     private final DataNodeOperations dataNodeOperations;
 
-    @Delegate
     private final LocalDirectoryOperations localDirectoryOperations;
+
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input) {
-        return search(input.getPath()).findAny()
-                .map(file -> FileHelpers.createFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
-                .orElse(Result.err(new FileEventSourceActions.FileEventError()));
+        FileHeader.HeaderDescriptor descriptor = new FileHeader.HeaderDescriptor(
+                List.of(new DataNode.AddNode(
+                        0,
+                        input.getLength(),
+                        fileProperties.getDataStreamFileHeaderLengthBytes(),
+                        fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength(), true
+                )),
+                new FileHeader.HeaderDescriptorData(fileProperties.getDataStreamFileHeaderLengthBytes(),
+                        fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength())
+        );
+        return Result.from(search(input.getPath()).findAny(), (Supplier<FileEventSourceActions.FileEventError>) FileEventSourceActions.FileEventError::new)
+                .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
+                        .flatMapResult(f -> HeaderOperationTypes.flushHeader(file, f))
+                        .flatMapResult(f -> FileHelpers.createFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
+                );
     }
+
 
     @Override
     public Result<FileMetadata, FileEventSourceActions.FileEventError> deleteFile(FileChangeEventInput input) {
@@ -73,6 +92,10 @@ public class SkipFileOperations implements FileOperations {
                         .mapError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
                         .map(h -> Map.entry(headerOps.getKey(), h))
                 )
+                .flatMapResult(h -> HeaderOperationTypes.writeHeader(h.getValue(), fileProperties)
+                        .flatMapResult(f -> HeaderOperationTypes.flushHeader(h.getKey(), f))
+                        .map(f -> Map.entry(h.getKey(), f))
+                )
                 .flatMapResult(h -> FileHelpers.fileMetadata(h.getKey(), input.getChangeType()));
     }
 
@@ -88,13 +111,16 @@ public class SkipFileOperations implements FileOperations {
                 )
                 .flatMapResult(byteFile -> Result
                         .from(
-                                Optional.ofNullable(HeaderOperationTypes.getOps(byteFile.getValue())),
+                                Optional.of(HeaderOperationTypes.getOps(byteFile.getValue())),
                                 new FileEventSourceActions.FileEventError("File operations unsuccessful.")
                         )
                         .flatMapResult(h -> h.map(s -> Map.entry(byteFile.getKey(), s)))
                 );
     }
 
+    public Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(Path path) {
+        return getFile(path.toAbsolutePath().toString()) ;
+    }
 
     /**
      * Stream the file data back to the user.
@@ -108,30 +134,60 @@ public class SkipFileOperations implements FileOperations {
             return Flux.just(Result.err(new FileEventSourceActions.FileEventError("Could not find path for %s.".formatted(path))));
         }
         return Flux.fromStream(fileHeader.stream())
-                .flatMap(fileData -> Flux.using(
-                        () -> new RandomAccessFile(fileData.getKey(), "r"),
-                        file -> Flux.fromStream(fileData.getValue().inIndices().stream())
-                                .filter(dataNode -> !(dataNode instanceof DataNode.SkipNode))
-                                .sort(Comparator.comparing(DataNode::indexStart))
-                                .publishOn(Schedulers.boundedElastic())
-                                .flatMap(dataNode -> {
-                                    try {
-                                        file.seek(dataNode.dataEnd());
-                                        byte [] toRead = new byte[Math.toIntExact(dataNode.length())];
-                                        file.read(toRead);
-                                        return Flux.just(Result.ok(new FileChangeEvent()));
-                                    } catch (IOException e) {
-                                        return Flux.just(Result.err(new FileEventSourceActions.FileEventError(e)));
-                                    }
-                                }),
-                        file -> {
-                            try {
-                                file.close();
-                            } catch (IOException e) {
-                                log.error("Error when closing file.", e);
-                            }
-                        }
-                ));
+                .flatMap(SkipFileOperations::readFile);
     }
 
+    public Publisher<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> getFile(String path) {
+        var fileHeader = getFileAndHeader(path);
+        if (fileHeader.isError()) {
+            return Flux.just(Result.err(new FileEventSourceActions.FileEventError("Could not find path for %s.".formatted(path))));
+        }
+        return Flux.fromStream(fileHeader.stream())
+                .flatMap(SkipFileOperations::readFile);
+    }
+
+    private static @NotNull Flux<Result<FileChangeEvent, FileEventSourceActions.FileEventError>> readFile(Map.Entry<File, FileHeader.HeaderDescriptor> fileData) {
+        return Flux.using(
+                () -> new RandomAccessFile(fileData.getKey(), "r"),
+                file -> Flux.fromStream(fileData.getValue().inIndices().stream())
+                        .filter(dataNode -> !(dataNode instanceof DataNode.SkipNode))
+                        .sort(Comparator.comparing(DataNode::indexStart))
+                        .publishOn(Schedulers.boundedElastic())
+                        .flatMap(dataNode -> {
+                            try {
+                                file.seek(dataNode.dataStart());
+                                byte[] toRead = new byte[Math.toIntExact(dataNode.length())];
+                                file.read(toRead);
+                                String s = new String(toRead);
+                                return Flux.just(Result.ok(new FileChangeEvent(
+                                        fileData.getKey().getName(),
+                                        FileChangeType.EXISTING,
+                                        Math.toIntExact(dataNode.indexStart()),
+                                        new ByteArray(toRead),
+                                        fileData.getKey().getPath())
+                                ));
+                            } catch (
+                                    IOException e) {
+                                return Flux.just(Result.err(new FileEventSourceActions.FileEventError(e)));
+                            }
+                        }),
+                file -> {
+                    try {
+                        file.close();
+                    } catch (IOException e) {
+                        log.error("Error when closing file.", e);
+                    }
+                }
+        );
+    }
+
+    @Override
+    public Publisher<Result<FileMetadata, FileEventSourceActions.FileEventError>> getMetadata(FileSearch path) {
+        return this.localDirectoryOperations.getMetadata(path);
+    }
+
+    @Override
+    public Stream<File> search(String path, @Nullable String fileName) {
+        return this.localDirectoryOperations.search(path, fileName);
+    }
 }

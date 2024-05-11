@@ -1,6 +1,9 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 
+import com.hayden.fileservice.codegen.types.FileChangeType;
+import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.config.FileProperties;
+import com.hayden.fileservice.filesource.FileHelpers;
 import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.ByteUtility;
@@ -8,6 +11,7 @@ import com.hayden.utilitymodule.result.Result;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -20,6 +24,10 @@ public enum HeaderOperationTypes {
 
     HeaderOperationTypes(String operation) {
         this.operation = operation;
+    }
+
+    public static Result<FileMetadata, FileEventSourceActions.FileEventError> flushHeader(File file, DataNode.FileEventHeaderResult headerResult) {
+        return FileHelpers.createFile(headerResult.responses(), file, FileChangeType.CREATED);
     }
 
     public static Result<DataNode.FileEventHeaderResult, FileEventSourceActions.FileEventError> writeHeader(
@@ -88,84 +96,54 @@ public enum HeaderOperationTypes {
 
     public static @NotNull Result<FileHeader.HeaderDescriptor, FileEventSourceActions.FileEventError> getOps(byte[] header) {
         byte[] bytes = DataStreamFileDelim.BETWEEN_HEADER_OPS.fileDelims.getBytes();
-        List<byte[]> eachHeaderOp = ByteUtility.splitByteArrayByByteValue(bytes, header, false);
-        var out = eachHeaderOp.stream()
-                .flatMap(eachHeader -> {
-                    byte[] starting = DataStreamFileDelim.INTRA_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes();
-                    try {
-                        List<byte[]> headerIndices = ByteUtility.splitByteArrayByByteValue(starting, eachHeader, false);
-                        if (headerIndices.isEmpty()) {
+        try {
+            List<byte[]> eachHeaderOp = ByteUtility.splitByteArrayByByteValue(bytes, header, false);
+            List<DataNode> out = eachHeaderOp.stream()
+                    .flatMap(eachHeader -> {
+                        byte[] starting = DataStreamFileDelim.INTRA_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes();
+                        try {
+                            List<byte[]> headerIndices = ByteUtility.splitByteArrayByByteValue(starting, eachHeader, false);
+                            if (headerIndices.isEmpty()) {
+                                return Stream.<DataNode>empty();
+                            }
+                            byte[] first = headerIndices.get(0);
+                            if (isAddOrRemove("a".getBytes(), first)) {
+                                List<byte[]> split = ByteUtility.splitByteArrayByByteValue("a".getBytes(), first, false);
+                                return split.stream().map(toSplit -> {
+                                    List<byte[]> eachIndex = ByteUtility.splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
+                                    return new DataNode.AddNode(
+                                            NumberEncoder.decodeNumber(eachIndex.get(0)),
+                                            NumberEncoder.decodeNumber(eachIndex.get(1)),
+                                            NumberEncoder.decodeNumber(eachIndex.get(2)),
+                                            NumberEncoder.decodeNumber(eachIndex.get(3)),
+                                            false
+                                    );
+                                });
+                            }
+                            if (isAddOrRemove("s".getBytes(), first)) {
+                                List<byte[]> split = ByteUtility.splitByteArrayByByteValue("s".getBytes(), first, false);
+                                return split.stream().map(toSplit -> {
+                                    List<byte[]> eachIndex = ByteUtility.splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
+                                    return new DataNode.SkipNode(
+                                            NumberEncoder.decodeNumber(eachIndex.get(0)),
+                                            NumberEncoder.decodeNumber(eachIndex.get(1)),
+                                            NumberEncoder.decodeNumber(eachIndex.get(2)),
+                                            NumberEncoder.decodeNumber(eachIndex.get(3)),
+                                            false
+                                    );
+                                });
+                            }
+                        } catch (ArrayIndexOutOfBoundsException e) {
                             return Stream.empty();
                         }
-                        byte[] first = headerIndices.get(0);
-                        if (isAddOrRemove("a".getBytes(), first)) {
-                            List<byte[]> split = ByteUtility.splitByteArrayByByteValue("a".getBytes(), first, false);
-                            return split.stream().map(toSplit -> {
-                                List<byte[]> eachIndex = ByteUtility.splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
-                                return new DataNode.AddNode(
-                                        NumberEncoder.decodeNumber(eachIndex.get(0)),
-                                        NumberEncoder.decodeNumber(eachIndex.get(1)),
-                                        NumberEncoder.decodeNumber(eachIndex.get(2)),
-                                        NumberEncoder.decodeNumber(eachIndex.get(3)),
-                                        false
-                                );
-                            });
-                        }
-                        if (isAddOrRemove("s".getBytes(), first)) {
-                            List<byte[]> split = ByteUtility.splitByteArrayByByteValue("s".getBytes(), first, false);
-                            return split.stream().map(toSplit -> {
-                                List<byte[]> eachIndex = ByteUtility.splitByteArrayByByteValue(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes(), toSplit, false);
-                                return new DataNode.SkipNode(
-                                        NumberEncoder.decodeNumber(eachIndex.get(0)),
-                                        NumberEncoder.decodeNumber(eachIndex.get(1)),
-                                        NumberEncoder.decodeNumber(eachIndex.get(2)),
-                                        NumberEncoder.decodeNumber(eachIndex.get(3)),
-                                        false
-                                );
-                            });
-                        }
-                    } catch (ArrayIndexOutOfBoundsException e) {
                         return Stream.empty();
-                    }
-                    return Stream.empty();
-                })
-                .toList();
-        System.out.println(out);
+                    })
+                    .toList();
 
-//        String[] descriptorData = forDescriptor[0].split(DataStreamFileDelim.INTER_HEADER_DESCRIPTORS_DELIM.fileDelims);
-//        if (Optional.of(descriptorData).map(s -> s.length != 2).orElse(false)) {
-//            return Result.err(new FileEventSourceActions.FileEventError("Could not parse descriptor data at beginning of file."));
-//        }
-//        FileHeader.HeaderDescriptorData data = new FileHeader.HeaderDescriptorData(Long.parseLong(descriptorData[0]), Long.parseLong(descriptorData[1]));
-        return null;
-//        return Result.ok(
-//                new FileHeader.HeaderDescriptor(Arrays.stream(headerStr.split(DataStreamFileDelim.BETWEEN_HEADER_OPS.fileDelims))
-//                        .flatMap(fileOp -> {
-//                            String[] headerOp = fileOp.split(DataStreamFileDelim.SPLIT_HEADER_OPERATION_TY_DELIM.fileDelims);
-//                            if (headerOp.length != 5 || Arrays.stream(headerOp).anyMatch(String::isBlank)) {
-//                                return Stream.empty();
-//                            }
-//                            try {
-//
-//                                SkipFileOperations.HeaderOpIndices getIndices = new SkipFileOperations.HeaderOpIndices(
-//                                        parsHeaderOp(headerOp[0]),
-//                                        parsHeaderOp(headerOp[2]),
-//                                        parsHeaderOp(headerOp[3]),
-//                                        parsHeaderOp(headerOp[4])
-//                                );
-//                                return Stream.of(Map.entry(HeaderOperationTypes.valueOf(headerOp[0]), getIndices));
-//                            } catch (
-//                                    ClassCastException |
-//                                    IllegalArgumentException c) {
-//                                log.error("Error when attempting to parse header operation: {}, {}.", Arrays.toString(headerOp), c.getMessage());
-//                                return Stream.empty();
-//                            }
-//                        })
-//                        .sorted(Comparator.comparing(e -> e.getValue().indexStart()))
-//                        .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList()))),
-//                        data
-//                ));
-
+            return Result.ok(new FileHeader.HeaderDescriptor(out, new FileHeader.HeaderDescriptorData(-1, -1)));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return Result.err(new FileEventSourceActions.FileEventError(e));
+        }
     }
 
     private static boolean isAddOrRemove(byte[] starting, byte[] first) {

@@ -71,11 +71,24 @@ public interface DataNode {
             };
         }
 
+        public static DataNode fromNode(DataNode dataNode, long indexStart, long indexEnd, long dataStart, long dataEnd) {
+            return switch(dataNode) {
+                case AddNode a -> fromNode(a, indexStart, indexEnd, dataStart, dataEnd);
+                case SkipNode s -> fromNode(s, indexStart, indexEnd, dataStart, dataEnd);
+                default ->
+                        throw new IllegalStateException("Unexpected value: " + dataNode);
+            };
+        }
+
         public static DataNode fromNode(AddNode dataNode, long indexStart, long indexEnd) {
             return new AddNode(indexStart, indexEnd, dataNode.dataStart, dataNode.dataEnd, true);
         }
 
-        public static DataNode fromNode(SkipNode dataNode, long indexStart, long indexEnd) {
+        public static DataNode fromNode(AddNode dataNode, long indexStart, long indexEnd, long dataStart, long dataEnd) {
+            return new AddNode(indexStart, indexEnd, dataStart, dataEnd, true);
+        }
+
+        public static DataNode fromNode(SkipNode dataNode, long indexStart, long indexEnd, long dataStart, long dataEnd) {
             return new SkipNode(indexStart, indexEnd, true);
         }
 

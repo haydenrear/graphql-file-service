@@ -31,8 +31,19 @@ public interface FileHelpers {
         return createFile(input, nextFile, 0);
     }
 
+    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(byte[] input, File nextFile, FileChangeType fileChangeType) {
+        try(var fos = new RandomAccessFile(nextFile, "rw"))  {
+            fos.seek(0);
+            fos.write(input);
+        } catch (IOException e) {
+            return fileMetadata(e);
+        }
+
+        return fileMetadata(nextFile, fileChangeType);
+    }
+
     static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input, File nextFile, long startingOffset) {
-        try(var fos = new RandomAccessFile(nextFile, "w"))  {
+        try(var fos = new RandomAccessFile(nextFile, "rw"))  {
             fos.seek(startingOffset);
             fos.write(input.getData().getBytes());
         } catch (IOException e) {
