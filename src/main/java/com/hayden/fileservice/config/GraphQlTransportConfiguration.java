@@ -2,6 +2,7 @@ package com.hayden.fileservice.config;
 
 import com.hayden.graphql.federated.transport.http.HttpGraphQlTransportBuilder;
 import com.hayden.graphql.models.federated.service.FederatedGraphQlServiceItemId;
+import com.hayden.graphql.models.visitor.VisitorModel;
 import com.hayden.graphql.models.visitor.simpletransport.GraphQlTransportModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MimeType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -53,6 +56,12 @@ public class GraphQlTransportConfiguration {
                 .queryParams(new LinkedMultiValueMap<>())
                 .build()
         );
+    }
+
+    @Bean
+    public List<VisitorModel> visitorModels(FederatedGraphQlServiceItemId itemId) {
+
+        return new ArrayList<>();
     }
 
 }

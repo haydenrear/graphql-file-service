@@ -16,7 +16,8 @@ public class VisitorModelService {
     private ChangeVisitorModelService visitorModelService;
 
     public List<VisitorModel> models() {
-        return Optional.ofNullable(visitorModelService).map(ChangeVisitorModelService::get)
+        return Optional.ofNullable(visitorModelService)
+                .map(ChangeVisitorModelService::get)
                 .orElse(new ArrayList<>());
     }
 
