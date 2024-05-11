@@ -4,6 +4,7 @@ import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.FileHelpers;
+import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNode;
 import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.ByteUtility;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -98,6 +100,7 @@ public enum HeaderOperationTypes {
         byte[] bytes = DataStreamFileDelim.BETWEEN_HEADER_OPS.fileDelims.getBytes();
         try {
             List<byte[]> eachHeaderOp = ByteUtility.splitByteArrayByByteValue(bytes, header, false);
+            AtomicLong max = new AtomicLong(header.length);
             List<DataNode> out = eachHeaderOp.stream()
                     .flatMap(eachHeader -> {
                         byte[] starting = DataStreamFileDelim.INTRA_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes();
@@ -115,7 +118,7 @@ public enum HeaderOperationTypes {
                                             NumberEncoder.decodeNumber(eachIndex.get(0)),
                                             NumberEncoder.decodeNumber(eachIndex.get(1)),
                                             NumberEncoder.decodeNumber(eachIndex.get(2)),
-                                            NumberEncoder.decodeNumber(eachIndex.get(3)),
+                                            getDataEnd(eachIndex, max),
                                             false
                                     );
                                 });
@@ -128,7 +131,7 @@ public enum HeaderOperationTypes {
                                             NumberEncoder.decodeNumber(eachIndex.get(0)),
                                             NumberEncoder.decodeNumber(eachIndex.get(1)),
                                             NumberEncoder.decodeNumber(eachIndex.get(2)),
-                                            NumberEncoder.decodeNumber(eachIndex.get(3)),
+                                            getDataEnd(eachIndex, max),
                                             false
                                     );
                                 });
@@ -140,10 +143,19 @@ public enum HeaderOperationTypes {
                     })
                     .toList();
 
-            return Result.ok(new FileHeader.HeaderDescriptor(out, new FileHeader.HeaderDescriptorData(-1, -1)));
+            return Result.ok(new FileHeader.HeaderDescriptor(out, new FileHeader.HeaderDescriptorData(header.length, max.get())));
         } catch (ArrayIndexOutOfBoundsException e) {
             return Result.err(new FileEventSourceActions.FileEventError(e));
         }
+    }
+
+    private static long getDataEnd(List<byte[]> eachIndex, AtomicLong max) {
+        long nextDataEnd = NumberEncoder.decodeNumber(eachIndex.get(3));
+        if (nextDataEnd > max.get()) {
+            max.set(nextDataEnd);
+        }
+
+        return nextDataEnd;
     }
 
     private static boolean isAddOrRemove(byte[] starting, byte[] first) {

@@ -1,10 +1,7 @@
-package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
+package com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode;
 
-import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.utilitymodule.result.Result;
 import lombok.experimental.UtilityClass;
-
-import java.util.List;
 
 /**
  * @param indexEnd End of where data should go in content section.

@@ -3,6 +3,7 @@ package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.config.ByteArray;
+import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.*;
 import com.hayden.utilitymodule.MapFunctions;
 import org.assertj.core.util.Lists;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,11 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DataNodeOperationsTest {
+
+    private final DataNodeOperations dataNodeOperations = new DataNodeOperationsDelegate(
+            new AddNodeOperations(),
+            new RemoveNodeOperations()
+    );
 
     @Test
     public void testAddContentAfterAll() {
@@ -38,7 +44,28 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.headerDescriptor().inIndices());
+    }
+    @Test
+    public void testInsertBeforeBlank() {
+        // Create initial state with some existing nodes
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 0, 2048, 2048, true));
+        var inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(2048, 2048));
+
+        // Simulate inserting data before the first existing node
+        FileChangeEventInput eventInput = createAdd(0, 5);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                List.of(
+                        new DataNode.AddNode(0, 5, 2048, 2053, true),
+                        new DataNode.AddNode(5, 5, 2048, 2048, true)
+                ),
+                new FileHeader.HeaderDescriptorData(2048, 2048));
+
+        // Call the method and assert the result
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -50,7 +77,7 @@ class DataNodeOperationsTest {
         existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
         existingNodes.add(new DataNode.AddNode(20, 30, 100, 110, true));
         existingNodes.add(new DataNode.AddNode(30, 40, 110, 120, true));
-        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+        var inIndices = new FileHeader.HeaderDescriptor(existingNodes,
                 new FileHeader.HeaderDescriptorData(0, 45));
 
         // Simulate inserting data before the first existing node
@@ -67,7 +94,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 45));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
     }
 
@@ -94,7 +121,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 45));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -132,7 +159,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 45));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -160,7 +187,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 35));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
 
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
     }
@@ -190,7 +217,7 @@ class DataNodeOperationsTest {
                     new FileHeader.HeaderDescriptorData(0, 35));
 
             // Call the method and assert the result
-            FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+            var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
 
             assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
         });
@@ -221,7 +248,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
     }
 
@@ -248,7 +275,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
     }
 
@@ -275,7 +302,7 @@ class DataNodeOperationsTest {
             expectedOutput.inIndices().add(new DataNode.AddNode(15 + i, 30 + i, 0, 10, true));
             expectedOutput.inIndices().add(new DataNode.AddNode(30 + i, 40 + i, 10, 20, true));
             // Call the method and assert the result
-            FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+            FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
             assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
         });
     }
@@ -302,7 +329,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30)
         );
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
         existingNodes = new ArrayList<>();
@@ -323,7 +350,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
 
@@ -343,7 +370,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
         existingNodes = new ArrayList<>();
@@ -361,7 +388,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
 
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
@@ -386,7 +413,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -409,7 +436,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -434,7 +461,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
         existingNodes = new ArrayList<DataNode>();
@@ -454,7 +481,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
 
@@ -476,7 +503,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -503,7 +530,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
     }
 
@@ -530,7 +557,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = new DataNodeOperations().insertNode(inIndices, eventInput).get();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
     }
 
@@ -540,8 +567,8 @@ class DataNodeOperationsTest {
 
     public void assertEqualsValue(List<DataNode> first, List<DataNode> second, boolean assertDataIndices) {
         String printIndex = "%s vs %s".formatted(
-                MapFunctions.CollectMap(first.stream().map(d -> Map.entry(d.indexStart(), d.indexEnd()))),
-                MapFunctions.CollectMap(second.stream().map(d -> Map.entry(d.indexStart(), d.indexEnd()))));
+                first.stream().map(d -> Map.entry(d.indexStart(), d.indexEnd())).toList(),
+                second.stream().map(d -> Map.entry(d.indexStart(), d.indexEnd())).toList());
         String printDataIndex = "%s vs %s".formatted(
                 first.stream().map(d -> Map.entry(d.dataStart(), d.dataEnd())).toList(),
                 second.stream().map(d -> Map.entry(d.dataStart(), d.dataEnd())).toList());

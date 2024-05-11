@@ -6,10 +6,11 @@ import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.FileHelpers;
 import com.hayden.fileservice.filesource.fileoperations.FileOperations;
 import com.hayden.fileservice.filesource.directoroperations.LocalDirectoryOperations;
+import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNode;
+import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +45,7 @@ import java.util.stream.Stream;
 public class SkipFileOperations implements FileOperations {
 
     private final FileProperties fileProperties;
-    private final DataNodeOperations dataNodeOperations;
-
+    private final DataNodeOperations dataNodeOperationsDelegate;
     private final LocalDirectoryOperations localDirectoryOperations;
 
 
@@ -58,8 +58,10 @@ public class SkipFileOperations implements FileOperations {
                         fileProperties.getDataStreamFileHeaderLengthBytes(),
                         fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength(), true
                 )),
-                new FileHeader.HeaderDescriptorData(fileProperties.getDataStreamFileHeaderLengthBytes(),
-                        fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength())
+                new FileHeader.HeaderDescriptorData(
+                        fileProperties.getDataStreamFileHeaderLengthBytes(),
+                        fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength()
+                )
         );
         return Result.from(search(input.getPath()).findAny(), (Supplier<FileEventSourceActions.FileEventError>) FileEventSourceActions.FileEventError::new)
                 .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
@@ -88,12 +90,27 @@ public class SkipFileOperations implements FileOperations {
 
     private Result<FileMetadata, FileEventSourceActions.FileEventError> doAddRemoveFileOp(FileChangeEventInput input) {
         return getFileAndHeader(input.getPath())
-                .flatMapResult(headerOps -> dataNodeOperations.insertNode(headerOps.getValue(), input)
+                .flatMapResult(headerOps -> dataNodeOperationsDelegate.doChangeNode(headerOps.getValue(), input)
                         .mapError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
                         .map(h -> Map.entry(headerOps.getKey(), h))
+                        .map(e -> {
+                            if (e.getValue().nodeAdded() instanceof DataNode.AddNode addNode) {
+                                try (RandomAccessFile randomAccessFile = new RandomAccessFile(e.getKey(), "rw")) {
+                                    randomAccessFile.seek(addNode.dataStart());
+                                    randomAccessFile.write(input.getData().getBytes());
+                                } catch (
+                                        IOException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            }
+                            return e;
+                        })
                 )
-                .flatMapResult(h -> HeaderOperationTypes.writeHeader(h.getValue(), fileProperties)
-                        .flatMapResult(f -> HeaderOperationTypes.flushHeader(h.getKey(), f))
+                .flatMapResult(h -> HeaderOperationTypes.writeHeader(h.getValue().headerDescriptor(), fileProperties)
+                        .flatMapResult(f -> {
+                            var flushed = HeaderOperationTypes.flushHeader(h.getKey(), f);
+                            return flushed;
+                        })
                         .map(f -> Map.entry(h.getKey(), f))
                 )
                 .flatMapResult(h -> FileHelpers.fileMetadata(h.getKey(), input.getChangeType()));
