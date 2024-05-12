@@ -46,7 +46,7 @@ public class LocalNaiveFileOperations implements FileOperations {
     public Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input) {
         return search(input.getPath())
                 .findAny()
-                .map(f -> FileHelpers.createFile(input, f))
+                .map(f -> FileHelpers.writeToFile(input, f))
                 .orElse(Result.err(new FileEventSourceActions.FileEventError("Could not find ")));
     }
 

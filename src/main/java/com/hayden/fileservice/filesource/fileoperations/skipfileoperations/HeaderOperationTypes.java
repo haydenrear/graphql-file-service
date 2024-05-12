@@ -29,7 +29,7 @@ public enum HeaderOperationTypes {
     }
 
     public static Result<FileMetadata, FileEventSourceActions.FileEventError> flushHeader(File file, DataNode.FileEventHeaderResult headerResult) {
-        return FileHelpers.createFile(headerResult.responses(), file, FileChangeType.CREATED);
+        return FileHelpers.writeToFile(headerResult.responses(), file, FileChangeType.CREATED);
     }
 
     public static Result<DataNode.FileEventHeaderResult, FileEventSourceActions.FileEventError> writeHeader(

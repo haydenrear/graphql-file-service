@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class VisitorModelService {
 
-    @Autowired(required = false)
-    private ChangeVisitorModelService visitorModelService;
+    private final ChangeVisitorModelService visitorModelService;
 
     public List<VisitorModel> models() {
         return Optional.ofNullable(visitorModelService)

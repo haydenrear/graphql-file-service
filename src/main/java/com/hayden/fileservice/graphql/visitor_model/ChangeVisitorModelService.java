@@ -9,8 +9,6 @@ import java.util.List;
  */
 public interface ChangeVisitorModelService {
 
-    boolean doChange();
-
     List<VisitorModel> get();
 
     void register(ChangeVisitorModel changeVisitorModel);

@@ -8,7 +8,6 @@ import com.hayden.utilitymodule.result.Result;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.time.Instant;
@@ -27,11 +26,11 @@ public interface FileHelpers {
         return Result.err(new FileEventSourceActions.FileEventError(t));
     }
 
-    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input, File nextFile) {
-        return createFile(input, nextFile, 0);
+    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> writeToFile(FileChangeEventInput input, File nextFile) {
+        return writeToFile(input, nextFile, 0);
     }
 
-    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(byte[] input, File nextFile, FileChangeType fileChangeType) {
+    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> writeToFile(byte[] input, File nextFile, FileChangeType fileChangeType) {
         try(var fos = new RandomAccessFile(nextFile, "rw"))  {
             fos.seek(0);
             fos.write(input);
@@ -42,7 +41,7 @@ public interface FileHelpers {
         return fileMetadata(nextFile, fileChangeType);
     }
 
-    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> createFile(FileChangeEventInput input, File nextFile, long startingOffset) {
+    static @NotNull Result<FileMetadata, FileEventSourceActions.FileEventError> writeToFile(FileChangeEventInput input, File nextFile, long startingOffset) {
         try(var fos = new RandomAccessFile(nextFile, "rw"))  {
             fos.seek(startingOffset);
             fos.write(input.getData().getBytes());
