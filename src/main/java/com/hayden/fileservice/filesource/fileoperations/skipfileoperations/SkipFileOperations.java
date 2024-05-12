@@ -5,7 +5,7 @@ import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.FileHelpers;
 import com.hayden.fileservice.filesource.fileoperations.FileOperations;
-import com.hayden.fileservice.filesource.directoroperations.LocalDirectoryOperations;
+import com.hayden.fileservice.filesource.directoryoperations.LocalDirectoryOperations;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNode;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;

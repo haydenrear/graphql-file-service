@@ -1,7 +1,7 @@
 package com.hayden.fileservice.filesource.fileoperations;
 
 import com.hayden.fileservice.codegen.types.*;
-import com.hayden.fileservice.filesource.directoroperations.DirectoryOperations;
+import com.hayden.fileservice.filesource.directoryoperations.DirectoryOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 import org.jetbrains.annotations.NotNull;

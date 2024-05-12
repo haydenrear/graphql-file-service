@@ -1,4 +1,4 @@
-package com.hayden.fileservice.filesource.directoroperations;
+package com.hayden.fileservice.filesource.directoryoperations;
 
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
