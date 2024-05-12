@@ -7,14 +7,20 @@ import com.hayden.graphql.models.federated.request.FederatedRequestDataItem;
 import com.hayden.graphql.models.federated.service.FederatedGraphQlServiceItemId;
 import com.hayden.utilitymodule.result.Result;
 import graphql.schema.DataFetchingEnvironment;
+import lombok.NoArgsConstructor;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.util.MimeType;
+import org.springframework.util.MimeTypeUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 
+@NoArgsConstructor
 public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeEvent> {
+
+    private static final MimeType FILES_MIME_TYPE = new MimeType("files", "*");
 
     private static final @Language("graphql") String FILE_CHANGE_EVENT = """
             subscription ListenToFileChanges($path: String, $fileId: ID, $fileName: String, $fileTypeType: String!, $fileTypeValue: String!) {
@@ -44,7 +50,8 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                      changeType
                   }
             }
-             """;
+            """;
+
 
     @Override
     public FederatedRequestData toRequestData(DataFetchingEnvironment env) {
@@ -56,7 +63,11 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                         .variables(env.getVariables())
                         .extensions(new HashMap<>())
                         .attributes(new HashMap<>())
-                        .federatedService(this.getBean(FederatedGraphQlServiceItemId.FederatedGraphQlServiceId.class))
+                        .federatedService(new FederatedGraphQlServiceItemId.FederatedGraphQlServiceId(
+                                FILES_MIME_TYPE,
+                                this.getClass().getSimpleName(),
+                                this.getClass().getPackage().getName()
+                        ))
                         .build()
         );
     }
