@@ -3,6 +3,8 @@ package com.hayden.fileservice.filesource;
 import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.config.ByteArray;
+import com.hayden.shared.communication.DataClientPublisher;
+import com.hayden.shared.communication.DataClientSubscriber;
 import com.hayden.utilitymodule.result.Result;
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration;
 import graphql.ExecutionResult;
@@ -38,6 +40,10 @@ class FileEventSourceTest {
 
     @MockBean
     FileDataSource fileDataSource;
+    @MockBean
+    DataClientSubscriber dataClientSubscriber;
+    @MockBean
+    DataClientPublisher dataClientPublisher;
 
     @Test
     void update() {

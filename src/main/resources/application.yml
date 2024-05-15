@@ -6,7 +6,7 @@ federated-graphql.schema-path: src/main/resources/schema
 federated-graphql:
   data-fetcher-sources:
     GetFilesRemoteDataFetcher:
-      path: src/main/resources/remotecode/com/hayden/fileservice/data_fetcher/GetFilesRemoteDataFetcher.java
-      field-name: *
-      package-name: com.hayden.fileservice.data_fetcher
-      mime-type: files/*
+      - path: file-service/src/main/resources/remotecode/com/hayden/fileservice/data_fetcher/GetFilesRemoteDataFetcher.java
+        field-name: "*"
+        package-name: "com.hayden.fileservice.data_fetcher"
+        mime-type: "files/*"
