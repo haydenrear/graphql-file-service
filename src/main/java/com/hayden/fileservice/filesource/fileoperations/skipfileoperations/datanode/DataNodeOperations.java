@@ -1,13 +1,9 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode;
 
 import com.hayden.fileservice.codegen.types.FileChangeEventInput;
-import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.FileHeader;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
-
-import java.util.List;
-import java.util.Queue;
 
 public interface DataNodeOperations {
 

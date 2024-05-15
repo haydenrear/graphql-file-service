@@ -1,11 +1,13 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 
+import com.google.common.collect.Lists;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNode;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.result.Result;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -40,6 +42,21 @@ public interface FileHeader {
 
     record HeaderDescriptor(
             List<DataNode> inIndices,
-            HeaderDescriptorData headerDescriptorData) {
+            HeaderDescriptorData headerDescriptorData) implements Result.AggregateResponse {
+        public HeaderDescriptor() {
+            this(new ArrayList<>(), null);
+        }
+        public HeaderDescriptor(DataNode dataNode, HeaderDescriptorData headerDescriptorData) {
+            this(Lists.newArrayList(dataNode), headerDescriptorData);
+        }
+        public HeaderDescriptor(DataNode dataNode) {
+            this(Lists.newArrayList(dataNode), null);
+        }
+        @Override
+        public void add(Result.AggregateResponse aggregateResponse) {
+            if (aggregateResponse instanceof HeaderDescriptor headerDescriptor) {
+                inIndices.addAll(headerDescriptor.inIndices);
+            }
+        }
     }
 }

@@ -18,6 +18,7 @@ public interface DataNode {
     long dataEnd();
     boolean change();
 
+
     default byte[] toByteArray() {
 
 //        return NumberEncoder.encodeNumber()
@@ -39,12 +40,21 @@ public interface DataNode {
         public AddNode(long indexStart, long indexEnd, boolean change)  {
             this(indexStart, indexEnd, -1, -1, change) ;
         }
+        public AddNode(NodeArgs nodeArgs) {
+            this(nodeArgs.indexStart, nodeArgs.indexEnd, nodeArgs.dataStart, nodeArgs.dataStart, nodeArgs.change);
+        }
     }
 
     record SkipNode(long indexStart, long indexEnd, long dataStart, long dataEnd, boolean change) implements DataNode {
         public SkipNode(long indexStart, long indexEnd, boolean change)  {
             this(indexStart, indexEnd, -1, -1, change) ;
         }
+        public SkipNode(NodeArgs nodeArgs) {
+            this(nodeArgs.indexStart, nodeArgs.indexEnd, nodeArgs.dataStart, nodeArgs.dataStart, nodeArgs.change);
+        }
+    }
+
+    record NodeArgs(long indexStart, long indexEnd, long dataStart, long dataEnd, boolean change) {
     }
 
     @UtilityClass

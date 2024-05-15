@@ -41,7 +41,7 @@ class HeaderOperationTypesTest {
         byte[] ok = new byte[] {
                 1,2,3,4,5,1,2,4,5,1,2,3,4,5,1,2
         };
-        List<byte[]> bytes = ByteUtility.splitByteArrayByByteValue(new byte[]{1, 2}, ok, false);
+        List<byte[]> bytes = ByteUtility.splitByteArrayByByteValue(new byte[]{1, 2}, ok);
         System.out.println(bytes);
     }
 
