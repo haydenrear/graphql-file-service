@@ -27,26 +27,28 @@ class DataNodeOperationsTest {
     public void testAddContentAfterAll() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 100, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate removing content in the middle of the file
         FileChangeEventInput eventInput = createAdd(40, 40);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 Lists.newArrayList(
-                        new DataNode.AddNode(0, 10, 0, 20, true),
-                        new DataNode.AddNode(10, 30, 0, 20, true),
-                        new DataNode.AddNode(30, 40, 20, 30, true),
-                        new DataNode.AddNode(40, 80, 20, 30, true)
+                        new DataNode.AddNode(0, 10, 90, 100, true),
+                        new DataNode.AddNode(10, 30, 100, 120, true),
+                        new DataNode.AddNode(30, 40, 120, 130, true),
+                        new DataNode.AddNode(40, 80, 130, 170, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 30));
+                new FileHeader.HeaderDescriptorData(90, 170));
         // Call the method and assert the result
         var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.headerDescriptor().inIndices());
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.headerDescriptor().inIndices(), true);
     }
+
+
     @Test
     public void testInsertBeforeBlank() {
         // Create initial state with some existing nodes
@@ -73,29 +75,29 @@ class DataNodeOperationsTest {
     public void testInsertBeforeExistingNode() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
         existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
-        existingNodes.add(new DataNode.AddNode(20, 30, 100, 110, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 110, 120, true));
+        existingNodes.add(new DataNode.AddNode(20, 30, 110, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         var inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 45));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate inserting data before the first existing node
         FileChangeEventInput eventInput = createAdd(5, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 5, true),
-                        new DataNode.AddNode(5, 10, 120, 125, true),
-                        new DataNode.AddNode(10, 15, true),
-                        new DataNode.AddNode(15, 25, true),
-                        new DataNode.AddNode(25, 35, 100, 110, true),
-                        new DataNode.AddNode(35, 45, 110, 120, true)
+                        new DataNode.AddNode(0, 5, 90, 95, true),
+                        new DataNode.AddNode(5, 10, 130, 135, true),
+                        new DataNode.AddNode(10, 15, 95, 100, true),
+                        new DataNode.AddNode(15, 25, 100, 110, true),
+                        new DataNode.AddNode(25, 35, 110, 120, true),
+                        new DataNode.AddNode(35, 45, 120, 130, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 45));
+                new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
         var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     @Test
@@ -139,57 +141,57 @@ class DataNodeOperationsTest {
     public void testInsertAfterExistingNode() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
-        existingNodes.add(new DataNode.AddNode(10, 20, 0, 10, true));
-        existingNodes.add(new DataNode.AddNode(20, 30, 0, 10, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
+        existingNodes.add(new DataNode.AddNode(20, 30, 110, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate inserting data after the first existing node
         FileChangeEventInput eventInput = createAdd(20, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 10, 0, 10, true),
-                        new DataNode.AddNode(10, 20, 0, 10, true),
-                                new DataNode.AddNode(20, 25, 0, 10, true),
-                        new DataNode.AddNode(25, 35, 20, 30, true),
-                        new DataNode.AddNode(35, 45, 20, 30, true)
+                        new DataNode.AddNode(0, 10, 90, 100, true),
+                        new DataNode.AddNode(10, 20, 100, 110, true),
+                        new DataNode.AddNode(20, 25, 130, 135, true),
+                        new DataNode.AddNode(25, 35, 110, 120, true),
+                        new DataNode.AddNode(35, 45, 120, 130, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 45));
+                new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
         var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     @Test
     public void testAddContentAtBeginning() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, true));
-        existingNodes.add(new DataNode.AddNode(10, 20, 0, 10, true));
-        existingNodes.add(new DataNode.AddNode(20, 30, 0, 10, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 10, 20, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
+        existingNodes.add(new DataNode.AddNode(20, 30, 110, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate removing content at the beginning of the file
         FileChangeEventInput eventInput = createAdd(0, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 5, true),
-                        new DataNode.AddNode(5, 15, true),
-                        new DataNode.AddNode(15, 25, 5, 10, true),
-                                new DataNode.AddNode(25, 35, 5, 10, true),
-                        new DataNode.AddNode(35, 45, 10, 20, true)
+                        new DataNode.AddNode(0, 5, 130, 135, true),
+                        new DataNode.AddNode(5, 15, 90, 100, true),
+                        new DataNode.AddNode(15, 25, 100, 110, true),
+                                new DataNode.AddNode(25, 35, 110, 120, true),
+                        new DataNode.AddNode(35, 45, 120, 130, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 35));
+                new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
         var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
 
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     @Test
@@ -197,29 +199,29 @@ class DataNodeOperationsTest {
         // Create initial state with some existing nodes
         IntStream.range(2, 100).boxed().filter(i -> i == 10).forEach(i -> {
             List<DataNode> existingNodes = new ArrayList<>();
-            existingNodes.add(new DataNode.AddNode(0, 10, true));
-            existingNodes.add(new DataNode.AddNode(10, 20, 0, 10, true));
-            existingNodes.add(new DataNode.AddNode(20, 30, 0, 10, true));
-            existingNodes.add(new DataNode.AddNode(30, 40, 10, 20, true));
+            existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+            existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
+            existingNodes.add(new DataNode.AddNode(20, 30, 110, 120, true));
+            existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
             FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                    new FileHeader.HeaderDescriptorData(0, 40));
+                    new FileHeader.HeaderDescriptorData(90, 130));
 
             // Simulate removing content at the beginning of the file
             FileChangeEventInput eventInput = createAdd(0, i);
             FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                     List.of(
-                            new DataNode.AddNode(0, i, true),
-                            new DataNode.AddNode(i, i + 10, true),
-                            new DataNode.AddNode(i + 10, i + 20, true),
-                            new DataNode.AddNode( i + 20,  i + 30, 5, 10, true),
-                            new DataNode.AddNode(i + 30, i + 40, 5, 10, true)
+                            new DataNode.AddNode(0, i, 130, 130 + i, true),
+                            new DataNode.AddNode(i, i + 10, 90, 100, true),
+                            new DataNode.AddNode(i + 10, i + 20, 110, 120, true),
+                            new DataNode.AddNode( i + 20,  i + 30, 110, 120, true),
+                            new DataNode.AddNode(i + 30, i + 40, 120, 130, true)
                     ),
-                    new FileHeader.HeaderDescriptorData(0, 35));
+                    new FileHeader.HeaderDescriptorData(90, 130 + i));
 
             // Call the method and assert the result
             var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
 
-            assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+            assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
         });
     }
 
@@ -229,54 +231,54 @@ class DataNodeOperationsTest {
     public void testAddContentInMiddle() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 100, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate removing content in the middle of the file
         FileChangeEventInput eventInput = createAdd(15, 10);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 10, 0, 20, true),
-                        new DataNode.AddNode(10, 15, 0, 10, true),
-                        new DataNode.AddNode(15, 25, 0, 10, true),
-                        new DataNode.AddNode(25, 40, 0, 10, true),
-                        new DataNode.AddNode(40, 50, 10, 20, true)
+                        new DataNode.AddNode(0, 10, 90, 100, true),
+                        new DataNode.AddNode(10, 15, 100, 105, true),
+                        new DataNode.AddNode(15, 25, 130, 140, true),
+                        new DataNode.AddNode(25, 40, 105, 120, true),
+                        new DataNode.AddNode(40, 50, 120, 130, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 30));
+                new FileHeader.HeaderDescriptorData(90, 140));
 
         // Call the method and assert the result
         FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     @Test
     public void testAddContentInMiddleBigger() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 100, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate removing content in the middle of the file
         FileChangeEventInput eventInput = createAdd(15, 20);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 10, 0, 20, true),
-                        new DataNode.AddNode(10, 15, 0, 10, true),
-                        new DataNode.AddNode(15, 35, 0, 10, true),
-                        new DataNode.AddNode(35, 50, 0, 10, true),
-                        new DataNode.AddNode(50, 60, 10, 20, true)
+                        new DataNode.AddNode(0, 10, 90, 100, true),
+                        new DataNode.AddNode(10, 15, 100, 105, true),
+                        new DataNode.AddNode(15, 35, 130, 150, true),
+                        new DataNode.AddNode(35, 50, 105, 120, true),
+                        new DataNode.AddNode(50, 60, 120, 130, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 30));
+                new FileHeader.HeaderDescriptorData(90, 150));
 
         // Call the method and assert the result
         FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     @Test
@@ -284,26 +286,26 @@ class DataNodeOperationsTest {
         // Create initial state with some existing nodes
         IntStream.range(2, 100).forEach(i -> {
             List<DataNode> existingNodes = new ArrayList<>();
-            existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
-            existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
-            existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+            existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+            existingNodes.add(new DataNode.AddNode(10, 30, 100, 120, true));
+            existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
             FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                    new FileHeader.HeaderDescriptorData(0, 40));
+                    new FileHeader.HeaderDescriptorData(90, 130));
 
             // Simulate removing content in the middle of the file
             FileChangeEventInput eventInput = createAdd(15, i);
             FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                     Lists.newArrayList(
-                            new DataNode.AddNode(0, 10, 0, 20, true),
-                            new DataNode.AddNode(10, 15, 0, 10, true)
                     ),
                     new FileHeader.HeaderDescriptorData(0, 30));
-            expectedOutput.inIndices().add(new DataNode.AddNode(15, 15 + i, 0, 10, true));
-            expectedOutput.inIndices().add(new DataNode.AddNode(15 + i, 30 + i, 0, 10, true));
-            expectedOutput.inIndices().add(new DataNode.AddNode(30 + i, 40 + i, 10, 20, true));
+            expectedOutput.inIndices().add(new DataNode.AddNode(0, 10, 90, 100, true));
+            expectedOutput.inIndices().add(new DataNode.AddNode(10, 15, 100, 105, true));
+            expectedOutput.inIndices().add(new DataNode.AddNode(15, 15 + i, 130, 130 + i, true));
+            expectedOutput.inIndices().add(new DataNode.AddNode(15 + i, 30 + i, 105, 120, true));
+            expectedOutput.inIndices().add(new DataNode.AddNode(30 + i, 40 + i, 120, 130, true));
             // Call the method and assert the result
             FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-            assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+            assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
         });
     }
 
@@ -511,54 +513,56 @@ class DataNodeOperationsTest {
     public void testAddContentInMiddleSmaller() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 20, 100, 110, true));
+        existingNodes.add(new DataNode.AddNode(20, 30, 110, 120, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 120, 130, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 130));
 
         // Simulate removing content in the middle of the file
         FileChangeEventInput eventInput = createAdd(15, 5);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 10, 0, 20, true),
-                        new DataNode.AddNode(10, 15, 0, 10, true),
-                        new DataNode.AddNode(15, 20, 0, 10, true),
-                        new DataNode.AddNode(20, 35, 0, 10, true),
-                        new DataNode.AddNode(35, 45, 10, 20, true)
+                        new DataNode.AddNode(0, 10, 90, 100, true),
+                        new DataNode.AddNode(10, 15, 100, 105, true),
+                        new DataNode.AddNode(15, 20, 130, 135, true),
+                        new DataNode.AddNode(20, 25, 105, 110, true),
+                        new DataNode.AddNode(25, 35, 110, 120, true),
+                        new DataNode.AddNode(35, 45, 120, 130, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 30));
+                new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
         FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     @Test
     public void testAddContentInMiddleSmallest() {
         // Create initial state with some existing nodes
         List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(10, 30, 0, 20, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 20, 30, true));
+        existingNodes.add(new DataNode.AddNode(0, 10, 90, 100, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 100, 130, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 130, 140, true));
         FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 40));
+                new FileHeader.HeaderDescriptorData(90, 140));
 
         // Simulate removing content in the middle of the file
         FileChangeEventInput eventInput = createAdd(15, 3);
         FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
                 List.of(
-                        new DataNode.AddNode(0, 10, 0, 20, true),
-                        new DataNode.AddNode(10, 15, 0, 10, true),
-                        new DataNode.AddNode(15, 18, 0, 10, true),
-                        new DataNode.AddNode(18, 33, 0, 10, true),
-                        new DataNode.AddNode(33, 43, 10, 20, true)
+                        new DataNode.AddNode(0, 10, 90, 100, true),
+                        new DataNode.AddNode(10, 15, 100, 105, true),
+                        new DataNode.AddNode(15, 18, 140, 143, true),
+                        new DataNode.AddNode(18, 33, 105, 130, true),
+                        new DataNode.AddNode(33, 43, 130, 140, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 30));
+                new FileHeader.HeaderDescriptorData(90, 143));
 
         // Call the method and assert the result
         FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), false);
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
     public void assertEqualsValue(List<DataNode> first, List<DataNode> second) {
@@ -572,6 +576,9 @@ class DataNodeOperationsTest {
         String printDataIndex = "%s vs %s".formatted(
                 first.stream().map(d -> Map.entry(d.dataStart(), d.dataEnd())).toList(),
                 second.stream().map(d -> Map.entry(d.dataStart(), d.dataEnd())).toList());
+
+        System.out.println(printIndex);
+        System.out.println(printDataIndex);
 
         assertEquals(first.size(), second.size(), printIndex);
         boolean condition = first.stream().allMatch(d -> second.stream().anyMatch(d1 -> d.indexStart() == d1.indexStart() && d.indexEnd() == d1.indexEnd()));

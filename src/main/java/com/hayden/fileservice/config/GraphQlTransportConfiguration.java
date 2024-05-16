@@ -4,8 +4,6 @@ import com.hayden.fileservice.data_fetcher.GetFilesRemoteDataFetcher;
 import com.hayden.graphql.federated.transport.http.HttpGraphQlTransportBuilder;
 import com.hayden.graphql.models.GraphQlTarget;
 import com.hayden.graphql.models.federated.service.FederatedGraphQlServiceFetcherItemId;
-import com.hayden.graphql.models.visitor.datafed.DataFederationSources;
-import com.hayden.graphql.models.visitor.datafed.GraphQlDataFederationModel;
 import com.hayden.graphql.models.visitor.datafetcher.DataFetcherGraphQlSource;
 import com.hayden.graphql.models.visitor.datafetcher.GraphQlDataFetcherDiscoveryModel;
 import com.hayden.graphql.models.visitor.schema.GraphQlFederatedSchemaSource;
@@ -96,17 +94,4 @@ public class GraphQlTransportConfiguration {
         return new GraphQlDataFetcherDiscoveryModel(getFilesRemoteDataFetcherServiceItemId, schemas, dataFetchers);
     }
 
-    @Bean
-    public Collection<DataFederationSources> federationSource() {
-        return new ArrayList<>();
-    }
-
-    @Bean
-    public GraphQlDataFederationModel getGraphQlDataFederationModel(
-            FederatedGraphQlServiceFetcherItemId getFilesRemoteDataFetcherServiceItemId,
-            Collection<GraphQlFederatedSchemaSource> schemas,
-            Collection<DataFederationSources> federationSource
-    ) {
-        return new GraphQlDataFederationModel(getFilesRemoteDataFetcherServiceItemId, schemas, federationSource);
-    }
 }

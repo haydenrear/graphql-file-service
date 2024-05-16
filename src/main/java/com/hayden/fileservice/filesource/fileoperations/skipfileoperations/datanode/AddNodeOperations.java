@@ -109,14 +109,18 @@ public class AddNodeOperations implements DataNodeOperations{
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart()
+                            toInsert.indexStart(),
+                            toInsertInto.dataStart(),
+                            toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart())
                     ),
                     toInsert,
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsert.indexEnd(),
-                            toInsertEnd
-                            )
+                            toInsertEnd,
+                            toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart()),
+                            toInsertInto.dataEnd()
+                    )
             );
         }
 
@@ -167,13 +171,17 @@ public class AddNodeOperations implements DataNodeOperations{
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart()
+                            toInsert.indexStart(),
+                            toInsertInto.dataStart(),
+                            toInsertInto.dataStart() + (toInsertInto.length() - toInsert.length())
                     ),
                     toInsert,
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsert.indexEnd(),
-                            toInsertEnd
+                            toInsertEnd,
+                            toInsertInto.dataStart() + (toInsertInto.length() - toInsert.length()),
+                            toInsertInto.dataEnd()
                     )
             );
         }
@@ -222,12 +230,16 @@ public class AddNodeOperations implements DataNodeOperations{
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsertInto.indexStart(),
-                            toInsert.indexStart()
+                            toInsert.indexStart(),
+                            toInsertInto.dataStart(),
+                            toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart())
                     ),
                     DataNode.DataNodeFactory.fromNode(
                             toInsertInto,
                             toInsert.indexEnd(),
-                            end
+                            end,
+                            toInsertInto.dataStart() + (toInsert.indexStart() - toInsertInto.indexStart()),
+                            toInsertInto.dataEnd()
                     )
             );
         }
