@@ -260,7 +260,7 @@ public class AddNodeOperations implements DataNodeOperations{
         return new ArrayList<>();
     }
 
-    private static @Nullable ArrayList<DataNode> doAfterInsert(DataNode toInsertInto, DataNode toInsert, DataNode lastLast, DataNode last) {
+    private static ArrayList<DataNode> doAfterInsert(DataNode toInsertInto, DataNode toInsert, DataNode lastLast, DataNode last) {
         return Lists.newArrayList(
                 DataNode.DataNodeFactory.fromNode(
                         toInsertInto,
