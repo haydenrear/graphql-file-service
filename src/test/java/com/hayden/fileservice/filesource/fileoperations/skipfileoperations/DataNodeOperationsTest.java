@@ -4,7 +4,6 @@ import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.*;
-import com.hayden.utilitymodule.MapFunctions;
 import org.assertj.core.util.Lists;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -445,48 +444,126 @@ class DataNodeOperationsTest {
     @Test
     public void testRemoveContentRemovalInMiddleSmallerRemove() {
         // Create initial state with some existing nodes
-        List<DataNode> existingNodes = new ArrayList<>();
-        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
-        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
-        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
-        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 5));
+        testRemoveRightFlushNonOverlapLeft();
+        testRemoveStartDataNonRightFlush();
+        testRemoveMiddleNonRightFlushNonLeftFlushNonOverlap();
+        testRemoveLeftFlushOverlapRight();
+        testRemoveRightFlushOverlapLeft();
+        testRemoveAllOverlap();
+        testRemoveRightFlushLeftFlush();
+        testRemoveLeftFlushNonOverlapRight();
+    }
 
-        // Simulate removing content in the middle of the file
-        FileChangeEventInput eventInput = createRemove(7, 3);
-        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
-                Lists.newArrayList(
-                        new DataNode.AddNode(0, 7, 0, 7, true),
-                        new DataNode.AddNode(7, 27, 10, 30, true),
-                        new DataNode.AddNode(27, 37, 30, 40, true)
-                ),
-                new FileHeader.HeaderDescriptorData(0, 30));
-
-        // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
-        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
-
+    private void testRemoveRightFlushLeftFlush() {
+        FileHeader.HeaderDescriptor inIndices;
+        FileHeader.HeaderDescriptor expectedOutput;
+        FileHeader.HeaderDescriptor actualOutput;
+        FileChangeEventInput eventInput;
+        List<DataNode> existingNodes;
         existingNodes = new ArrayList<DataNode>();
         existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
         existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
         existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
         inIndices = new FileHeader.HeaderDescriptor(existingNodes,
-                new FileHeader.HeaderDescriptorData(0, 5));
+                new FileHeader.HeaderDescriptorData(10, 40));
 
         // Simulate removing content in the middle of the file
-        eventInput = createRemove(30, 3);
+        eventInput = createRemove(10, 20);
         expectedOutput = new FileHeader.HeaderDescriptor(
                 Lists.newArrayList(
                         new DataNode.AddNode(0, 10, 0, 10, true),
-                        new DataNode.AddNode(10, 30, 10, 30, true),
-                        new DataNode.AddNode(30, 37, 33, 40, true)
+                        new DataNode.AddNode(10, 20, 30, 40, true)
                 ),
-                new FileHeader.HeaderDescriptorData(0, 30));
+                new FileHeader.HeaderDescriptorData(0, 40));
         // Call the method and assert the result
         actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
 
+    private void testRemoveAllOverlap() {
+        FileHeader.HeaderDescriptor inIndices;
+        FileHeader.HeaderDescriptor expectedOutput;
+        FileHeader.HeaderDescriptor actualOutput;
+        FileChangeEventInput eventInput;
+        List<DataNode> existingNodes;
+        existingNodes = new ArrayList<DataNode>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
+        inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(10, 40));
 
+        // Simulate removing content in the middle of the file
+        eventInput = createRemove(8, 30);
+        expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 8, 0, 8, true),
+                        new DataNode.AddNode(8, 10, 38, 40, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 40));
+        // Call the method and assert the result
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    private void testRemoveRightFlushOverlapLeft() {
+        List<DataNode> existingNodes;
+        FileHeader.HeaderDescriptor inIndices;
+        FileHeader.HeaderDescriptor actualOutput;
+        FileChangeEventInput eventInput;
+        FileHeader.HeaderDescriptor expectedOutput;
+        existingNodes = new ArrayList<DataNode>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
+        inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(10, 40));
+
+        // Simulate removing content in the middle of the file
+        eventInput = createRemove(8, 22);
+        expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 8, 0, 8, true),
+                        new DataNode.AddNode(8, 18, 30, 40, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 40));
+        // Call the method and assert the result
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    private void testRemoveLeftFlushOverlapRight() {
+        FileChangeEventInput eventInput;
+        FileHeader.HeaderDescriptor inIndices;
+        FileHeader.HeaderDescriptor actualOutput;
+        List<DataNode> existingNodes;
+        FileHeader.HeaderDescriptor expectedOutput;
+        existingNodes = new ArrayList<DataNode>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
+        inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(10, 40));
+
+        // Simulate removing content in the middle of the file
+        eventInput = createRemove(10, 22);
+        expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 10, 0, 10, true),
+                        new DataNode.AddNode(10, 18, 32, 40, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 40));
+        // Call the method and assert the result
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    private void testRemoveMiddleNonRightFlushNonLeftFlushNonOverlap() {
+        List<DataNode> existingNodes;
+        FileHeader.HeaderDescriptor inIndices;
+        FileHeader.HeaderDescriptor expectedOutput;
+        FileChangeEventInput eventInput;
+        FileHeader.HeaderDescriptor actualOutput;
         existingNodes = new ArrayList<DataNode>();
         existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
         existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
@@ -506,6 +583,79 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
         actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
+    }
+
+    private void testRemoveStartDataNonRightFlush() {
+        List<DataNode> existingNodes;
+        FileHeader.HeaderDescriptor expectedOutput;
+        FileChangeEventInput eventInput;
+        FileHeader.HeaderDescriptor inIndices;
+        FileHeader.HeaderDescriptor actualOutput;
+        existingNodes = new ArrayList<DataNode>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
+        inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 5));
+
+        // Simulate removing content in the middle of the file
+        eventInput = createRemove(30, 3);
+        expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 10, 0, 10, true),
+                        new DataNode.AddNode(10, 30, 10, 30, true),
+                        new DataNode.AddNode(30, 37, 33, 40, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+        // Call the method and assert the result
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    private void testRemoveLeftFlushNonOverlapRight() {
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 40));
+
+        // Simulate removing content in the middle of the file
+        FileChangeEventInput eventInput = createRemove(10, 5);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 10, 0, 10, true),
+                        new DataNode.AddNode(10, 25, 15, 30, true),
+                        new DataNode.AddNode(25, 35, 30, 40, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 40));
+
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
+    }
+
+    private void testRemoveRightFlushNonOverlapLeft() {
+        List<DataNode> existingNodes = new ArrayList<>();
+        existingNodes.add(new DataNode.AddNode(0, 10, 0, 10, true));
+        existingNodes.add(new DataNode.AddNode(10, 30, 10, 30, true));
+        existingNodes.add(new DataNode.AddNode(30, 40, 30, 40, true));
+        FileHeader.HeaderDescriptor inIndices = new FileHeader.HeaderDescriptor(existingNodes,
+                new FileHeader.HeaderDescriptorData(0, 5));
+
+        // Simulate removing content in the middle of the file
+        FileChangeEventInput eventInput = createRemove(7, 3);
+        FileHeader.HeaderDescriptor expectedOutput = new FileHeader.HeaderDescriptor(
+                Lists.newArrayList(
+                        new DataNode.AddNode(0, 7, 0, 7, true),
+                        new DataNode.AddNode(7, 27, 10, 30, true),
+                        new DataNode.AddNode(27, 37, 30, 40, true)
+                ),
+                new FileHeader.HeaderDescriptorData(0, 30));
+
+        // Call the method and assert the result
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 

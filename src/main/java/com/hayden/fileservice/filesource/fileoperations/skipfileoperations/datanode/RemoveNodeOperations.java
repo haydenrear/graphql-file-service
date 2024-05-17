@@ -103,24 +103,12 @@ public class RemoveNodeOperations implements DataNodeOperations {
         if (DataNodeOperations.isFirstLeftFlushOverlappingRightSecond(toInsert, toInsertInto)) {
             // shift the node by the amount of the insert - only return toInsertInto node, as the toInsert node will
             // be returned once it ends.
-            return Pair.of(false, Lists.newArrayList(
-                    DataNode.DataNodeFactory.fromNode(
-                            toInsertInto,
-                            toInsertInto.indexStart() - toInsert.length(),
-                            toInsert.indexEnd() - toInsert.length()
-                    )
-            ));
+            return Pair.of(false, Lists.newArrayList());
         }
 
         if (DataNodeOperations.isFirstRightFlushOverlappingLeftSecond(toInsert, toInsertInto)) {
             // return the node toInsert along with the node being overlapped shifted.
-            return Pair.of(true, Lists.newArrayList(
-                    DataNode.DataNodeFactory.fromNode(
-                            toInsertInto,
-                            toInsertInto.indexStart() - toInsert.length(),
-                            toInsert.indexEnd() - toInsert.length()
-                    )
-            ));
+            return Pair.of(false, Lists.newArrayList());
         }
 
         if (DataNodeOperations.isFirstLeftFlushSecond(toInsert, toInsertInto)) {
@@ -204,7 +192,7 @@ public class RemoveNodeOperations implements DataNodeOperations {
         return Pair.of(false, new ArrayList<>());
     }
 
-    private static @Nullable Pair<Boolean, List<DataNode>> doAfterRemove(DataNode toInsertInto, DataNode toInsert, DataNode lastLast, DataNode last) {
+    private static Pair<Boolean, List<DataNode>> doAfterRemove(DataNode toInsertInto, DataNode toInsert, DataNode lastLast, DataNode last) {
         return Pair.of(true, Lists.newArrayList(
                 DataNode.DataNodeFactory.fromNode(
                         toInsertInto,
