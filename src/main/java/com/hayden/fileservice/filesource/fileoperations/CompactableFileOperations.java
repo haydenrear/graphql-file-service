@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.FileHeader;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
+import com.hayden.utilitymodule.result.Agg;
 import com.hayden.utilitymodule.result.res.Responses;
 import com.hayden.utilitymodule.result.Result;
 
@@ -23,7 +24,7 @@ public interface CompactableFileOperations {
         Set<String> resultMessage();
 
         @Override
-        default void add(Responses.AggregateResponse aggregateResponse) {
+        default void add(Agg aggregateResponse) {
             if (aggregateResponse instanceof CompactableFileOperationsResponse res) {
                 file().addAll(res.file());
                 resultMessage().addAll(res.resultMessage());

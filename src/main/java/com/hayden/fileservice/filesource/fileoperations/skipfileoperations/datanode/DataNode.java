@@ -1,5 +1,6 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode;
 
+import com.hayden.utilitymodule.result.Agg;
 import com.hayden.utilitymodule.result.res.Responses;
 import lombok.experimental.UtilityClass;
 
@@ -19,16 +20,11 @@ public interface DataNode {
     boolean change();
 
 
-    default byte[] toByteArray() {
-
-//        return NumberEncoder.encodeNumber()
-        return null;
-    }
-
     record FileEventHeaderResult(byte[] responses) implements Responses.AggregateResponse {
 
         @Override
-        public void add(Responses.AggregateResponse aggregateResponse) {
+        public void add(Agg aggregateResponse) {
+            throw new UnsupportedOperationException("Haven't refactored to mapping collector.");
         }
     }
 
@@ -58,7 +54,7 @@ public interface DataNode {
     }
 
     @UtilityClass
-    public class DataNodeFactory {
+    class DataNodeFactory {
 
         public static DataNode nodeShifted(AddNode currentNode, long length) {
             return new AddNode(currentNode.indexStart + length, currentNode.indexEnd + length,
