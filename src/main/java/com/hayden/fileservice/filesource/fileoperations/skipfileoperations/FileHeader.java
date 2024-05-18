@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNode;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
+import com.hayden.utilitymodule.result.res.Responses;
 import com.hayden.utilitymodule.result.Result;
 
 import java.io.*;
@@ -42,7 +43,7 @@ public interface FileHeader {
 
     record HeaderDescriptor(
             List<DataNode> inIndices,
-            HeaderDescriptorData headerDescriptorData) implements Result.AggregateResponse {
+            HeaderDescriptorData headerDescriptorData) implements Responses.AggregateResponse {
         public HeaderDescriptor() {
             this(new ArrayList<>(), null);
         }
@@ -53,7 +54,7 @@ public interface FileHeader {
             this(Lists.newArrayList(dataNode), null);
         }
         @Override
-        public void add(Result.AggregateResponse aggregateResponse) {
+        public void add(Responses.AggregateResponse aggregateResponse) {
             if (aggregateResponse instanceof HeaderDescriptor headerDescriptor) {
                 inIndices.addAll(headerDescriptor.inIndices);
             }

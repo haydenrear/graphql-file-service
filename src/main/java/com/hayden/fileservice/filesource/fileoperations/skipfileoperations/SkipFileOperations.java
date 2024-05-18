@@ -11,9 +11,9 @@ import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datan
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.RandomUtils;
-import com.hayden.utilitymodule.result.Error;
+import com.hayden.utilitymodule.result.error.Error;
 import com.hayden.utilitymodule.result.Result;
-import com.hayden.utilitymodule.result.ResultCollectors;
+import com.hayden.utilitymodule.result.map.ResultCollectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;

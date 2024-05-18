@@ -9,7 +9,7 @@ import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.ByteUtility;
 import com.hayden.utilitymodule.result.Result;
-import com.hayden.utilitymodule.result.ResultCollectors;
+import com.hayden.utilitymodule.result.map.ResultCollectors;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 

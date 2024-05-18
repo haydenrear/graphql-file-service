@@ -2,7 +2,7 @@ package com.hayden.fileservice.config;
 
 
 import com.hayden.graphql.models.visitor.datafetcher.DataFetcherGraphQlSource;
-import com.hayden.utilitymodule.result.Error;
+import com.hayden.utilitymodule.result.error.Error;
 import com.hayden.utilitymodule.result.Result;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -8,13 +8,14 @@ import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
-import com.hayden.utilitymodule.result.Error;
+import com.hayden.utilitymodule.result.error.AggregateError;
+import com.hayden.utilitymodule.result.error.Error;
 import com.hayden.utilitymodule.result.Result;
 import org.reactivestreams.Publisher;
 
 public interface FileEventSourceActions {
 
-    record FileEventError(Set<Error> fileEventErrors) implements Error.AggregateError {
+    record FileEventError(Set<Error> fileEventErrors) implements AggregateError {
         public FileEventError() {
             this(new HashSet<>());
         }

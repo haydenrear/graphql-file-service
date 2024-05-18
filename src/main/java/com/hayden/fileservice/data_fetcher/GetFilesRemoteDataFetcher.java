@@ -5,7 +5,7 @@ import com.hayden.graphql.models.dataservice.RemoteDataFetcherImpl;
 import com.hayden.graphql.models.federated.request.FederatedRequestData;
 import com.hayden.graphql.models.federated.request.FederatedRequestDataItem;
 import com.hayden.graphql.models.federated.service.FederatedGraphQlServiceFetcherItemId;
-import com.hayden.utilitymodule.result.Error;
+import com.hayden.utilitymodule.result.error.Error;
 import com.hayden.utilitymodule.result.Result;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.NoArgsConstructor;

@@ -1,6 +1,6 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode;
 
-import com.hayden.utilitymodule.result.Result;
+import com.hayden.utilitymodule.result.res.Responses;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -25,10 +25,10 @@ public interface DataNode {
         return null;
     }
 
-    record FileEventHeaderResult(byte[] responses) implements Result.AggregateResponse {
+    record FileEventHeaderResult(byte[] responses) implements Responses.AggregateResponse {
 
         @Override
-        public void add(Result.AggregateResponse aggregateResponse) {
+        public void add(Responses.AggregateResponse aggregateResponse) {
         }
     }
 
