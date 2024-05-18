@@ -1,10 +1,6 @@
 package com.hayden.fileservice.graphql;
 
-import com.google.common.collect.Lists;
-
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -12,30 +8,31 @@ import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.codegen.types.FileChangeEventInput;
 import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
+import com.hayden.utilitymodule.result.Error;
 import com.hayden.utilitymodule.result.Result;
 import org.reactivestreams.Publisher;
 
 public interface FileEventSourceActions {
 
-    record FileEventError(Set<Result.Error> fileEventErrors) implements Result.AggregateError {
+    record FileEventError(Set<Error> fileEventErrors) implements Error.AggregateError {
         public FileEventError() {
             this(new HashSet<>());
         }
 
         public FileEventError(Throwable throwable) {
-            this(Sets.newHashSet(Result.Error.fromE(throwable)));
+            this(Sets.newHashSet(Error.fromE(throwable)));
         }
 
         public FileEventError(Throwable throwable, String cause) {
-            this(Sets.newHashSet(Result.Error.fromE(throwable, cause)));
+            this(Sets.newHashSet(Error.fromE(throwable, cause)));
         }
 
         public FileEventError(String throwable) {
-            this(Sets.newHashSet(Result.Error.fromMessage(throwable)));
+            this(Sets.newHashSet(Error.fromMessage(throwable)));
         }
 
         @Override
-        public Set<Result.Error> errors() {
+        public Set<Error> errors() {
             return fileEventErrors;
         }
     }

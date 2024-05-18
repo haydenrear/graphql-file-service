@@ -5,11 +5,11 @@ import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.config.FileProperties;
 import com.hayden.fileservice.filesource.FileHelpers;
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNode;
-import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.filesource.util.NumberEncoder;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.ByteUtility;
 import com.hayden.utilitymodule.result.Result;
+import com.hayden.utilitymodule.result.ResultCollectors;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -124,7 +124,7 @@ public enum HeaderOperationTypes {
                                     new FileEventSourceActions.FileEventError("Could not parse %s".formatted(e))));
                         }
                     })
-                    .collect(Result.AggregateResultCollector.fromValues(
+                    .collect(ResultCollectors.AggregateResultCollector.fromValues(
                             new FileHeader.HeaderDescriptor(),
                             new FileEventSourceActions.FileEventError()
                     ))

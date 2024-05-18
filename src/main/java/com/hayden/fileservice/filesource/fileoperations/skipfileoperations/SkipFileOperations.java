@@ -11,7 +11,9 @@ import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datan
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.RandomUtils;
+import com.hayden.utilitymodule.result.Error;
 import com.hayden.utilitymodule.result.Result;
+import com.hayden.utilitymodule.result.ResultCollectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +125,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         return e;
     }
 
-    private Result<Map.Entry<File, FileHeader.HeaderDescriptor>, Result.Error> getFileAndHeader(String path) {
+    private Result<Map.Entry<File, FileHeader.HeaderDescriptor>, Error> getFileAndHeader(String path) {
         return Result.from(search(path)
                                 .flatMap(f -> FileHeader.parseHeader(f, fileProperties)
                                         .mapError(e -> log.error("Error when parsing file: {}.", e.errors()))
@@ -300,6 +302,6 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
 
                             return Stream.of(Result.<FileFlushResponse, FileEventSourceActions.FileEventError>ok(new FileFlushResponse()));
                         })
-                        .collect(Result.AggregateResultCollector.toResult(() -> new FileFlushResponse(file), FileEventSourceActions.FileEventError::new));
+                        .collect(ResultCollectors.AggregateResultCollector.toResult(() -> new FileFlushResponse(file), FileEventSourceActions.FileEventError::new));
     }
 }
