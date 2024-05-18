@@ -7,7 +7,7 @@ import com.hayden.utilitymodule.result.Result;
 
 public interface DataNodeOperations {
 
-    public record ChangeNodeOperationsResult(DataNode nodeAdded, FileHeader.HeaderDescriptor headerDescriptor) {}
+    record ChangeNodeOperationsResult(DataNode nodeAdded, FileHeader.HeaderDescriptor headerDescriptor) {}
 
     static boolean isSecondNodeFullyBeforeFirstNode(DataNode first, DataNode second) {
         return second.indexEnd() < first.indexEnd() && second.indexStart() < first.indexStart()
