@@ -1,8 +1,7 @@
 package com.hayden.fileservice.graphql.visitor_model;
 
-import com.hayden.graphql.models.visitor.VisitorModel;
+import com.hayden.graphql.models.visitor.model.VisitorModel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

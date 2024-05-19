@@ -25,11 +25,18 @@ public class GraphQlTransportConfiguration {
 
 
     @Bean
-    public FederatedGraphQlServiceFetcherItemId getFilesRemoteDataFetcherServiceItemId(FileDataServiceProperties fileDataServiceProperties) {
+    public FederatedGraphQlServiceFetcherItemId getFilesRemoteDataFetcherServiceItemId(FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceInstanceId instance) {
         return new FederatedGraphQlServiceFetcherItemId(
                 getFilesRemoteDataFetcher(),
-                FileServiceConstants.DATA_SERVICE_ID,
-                fileDataServiceProperties.getHost()
+                instance
+        );
+    }
+
+    @Bean
+    public FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceInstanceId serviceInstanceId(FileDataServiceProperties fileDataServiceProperties) {
+        return new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceInstanceId(
+                new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceId(FileServiceConstants.DATA_SERVICE_ID),
+                new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlHost(fileDataServiceProperties.getHost())
         );
     }
 
@@ -53,13 +60,18 @@ public class GraphQlTransportConfiguration {
     @Bean
     public GraphQlTransportModel graphQlTransportModel(FederatedGraphQlServiceFetcherItemId getFilesRemoteDataFetcherServiceItemId,
                                                        FileDataServiceProperties fileDataServiceProperties,
-                                                       @Value("${server.port:9092}") int port) {
-        return new GraphQlTransportModel(getFilesRemoteDataFetcherServiceItemId, HttpGraphQlTransportBuilder.builder()
-                .host(fileDataServiceProperties.host)
-                .port(port)
-                .path("/graphql")
-                .queryParams(new LinkedMultiValueMap<>())
-                .build()
+                                                       @Value("${server.port:9092}") int port,
+                                                       FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceInstanceId instance) {
+        return new GraphQlTransportModel(
+                getFilesRemoteDataFetcherServiceItemId,
+                HttpGraphQlTransportBuilder.builder()
+                        .host(fileDataServiceProperties.host)
+                        .port(port)
+                        .path("/graphql")
+                        .queryParams(new LinkedMultiValueMap<>())
+                        .build(),
+                instance,
+                true
         );
     }
 
@@ -91,7 +103,12 @@ public class GraphQlTransportConfiguration {
             Collection<GraphQlFederatedSchemaSource> schemas,
             Collection<DataFetcherGraphQlSource> dataFetchers
     ) {
-        return new GraphQlDataFetcherDiscoveryModel(getFilesRemoteDataFetcherServiceItemId, schemas, dataFetchers);
+        return new GraphQlDataFetcherDiscoveryModel(
+                getFilesRemoteDataFetcherServiceItemId,
+                schemas,
+                dataFetchers,
+                true
+        );
     }
 
 }

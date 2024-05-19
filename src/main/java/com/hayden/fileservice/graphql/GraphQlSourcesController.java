@@ -1,7 +1,7 @@
 package com.hayden.fileservice.graphql;
 
 import com.hayden.fileservice.graphql.visitor_model.VisitorModelService;
-import com.hayden.graphql.models.visitor.VisitorModel;
+import com.hayden.graphql.models.visitor.model.VisitorModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
