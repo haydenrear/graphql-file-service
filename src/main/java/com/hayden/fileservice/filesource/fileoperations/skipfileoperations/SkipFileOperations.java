@@ -70,7 +70,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         return Result.fromThunk(search(input.getPath()).findAny(), FileEventSourceActions.FileEventError::new)
                 .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
                         .flatMapResult(f -> HeaderOperationTypes.flushHeader(file, f))
-                        .flatMapResult(_ -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
+                        .flatMapResult(f -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
                 );
     }
 
@@ -260,7 +260,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         Result<FileCompactifyResponse, FileEventSourceActions.FileEventError> result =
                 HeaderOperationTypes.writeHeader(new FileHeader.HeaderDescriptor(updated, headerDescriptor.headerDescriptorData()), fileProperties)
                         .flatMapResult(header -> HeaderOperationTypes.flushHeader(file, header))
-                        .flatMapResult(_ -> Result.ok(new FileCompactifyResponse(file)));
+                        .flatMapResult(f -> Result.ok(new FileCompactifyResponse(file)));
 
         if (result.isOk() && !archived.toFile().delete()) {
             return Result.all(
