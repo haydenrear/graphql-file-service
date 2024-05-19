@@ -27,7 +27,6 @@ import reactor.core.scheduler.Schedulers;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -68,10 +67,10 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                         fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength()
                 )
         );
-        return Result.from(search(input.getPath()).findAny(), (Supplier<FileEventSourceActions.FileEventError>) FileEventSourceActions.FileEventError::new)
+        return Result.fromThunk(search(input.getPath()).findAny(), FileEventSourceActions.FileEventError::new)
                 .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
                         .flatMapResult(f -> HeaderOperationTypes.flushHeader(file, f))
-                        .flatMapResult(f -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
+                        .flatMapResult(_ -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
                 );
     }
 
@@ -96,11 +95,9 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
     private Result<FileMetadata, FileEventSourceActions.FileEventError> doAddRemoveFileOp(FileChangeEventInput input) {
         return getFileAndHeader(input.getPath())
                 .flatMapResult(headerOps -> dataNodeOperationsDelegate.doChangeNode(headerOps.getValue(), input)
-                        .mapError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
+                        .doOnError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
                         .map(h -> Map.entry(headerOps.getKey(), h))
-                        .map(e -> {
-                            return getFileChangeNodeOperationsResultEntry(input, e);
-                        })
+                        .map(e -> getFileChangeNodeOperationsResultEntry(input, e))
                 )
                 .flatMapResult(h -> HeaderOperationTypes.writeHeader(h.getValue().headerDescriptor(), fileProperties)
                         .flatMapResult(f -> {
@@ -128,7 +125,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
     private Result<Map.Entry<File, FileHeader.HeaderDescriptor>, Error> getFileAndHeader(String path) {
         return Result.from(search(path)
                                 .flatMap(f -> FileHeader.parseHeader(f, fileProperties)
-                                        .mapError(e -> log.error("Error when parsing file: {}.", e.errors()))
+                                        .doOnError(e -> log.error("Error when parsing file: {}.", e.errors()))
                                         .stream()
                                         .map(b -> Map.entry(f, b))
                                 )
@@ -235,6 +232,26 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         }
     }
 
+    @Override
+    public Result<FileFlushResponse, FileEventSourceActions.FileEventError> flush(File file, FileHeader.HeaderDescriptor headerDescriptor, FileChangeEvent input) {
+
+        return headerDescriptor.inIndices()
+                .stream()
+                .flatMap(d -> {
+                    if (d instanceof DataNode.AddNode addNode && addNode.change()) {
+                        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
+                            randomAccessFile.seek(addNode.dataStart());
+                            randomAccessFile.write(input.getData().getBytes());
+                        } catch (IOException ex) {
+                            return Stream.of(Result.<FileFlushResponse, FileEventSourceActions.FileEventError>err(new FileEventSourceActions.FileEventError(ex)));
+                        }
+                    }
+
+                    return Stream.of(Result.<FileFlushResponse, FileEventSourceActions.FileEventError>ok(new FileFlushResponse()));
+                })
+                .collect(ResultCollectors.AggregateResultCollector.toResult(() -> new FileFlushResponse(file), FileEventSourceActions.FileEventError::new));
+    }
+
     private @Nullable Result<FileCompactifyResponse, FileEventSourceActions.FileEventError> compactifyFileAndFlushHeader(File file, FileHeader.HeaderDescriptor headerDescriptor, Path archived) throws IOException {
         var compactifyFileResult = compactifyFile(headerDescriptor, file);
         var updated = compactifyFileResult.nodes;
@@ -285,23 +302,4 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         }
     }
 
-    @Override
-    public Result<FileFlushResponse, FileEventSourceActions.FileEventError> flush(File file, FileHeader.HeaderDescriptor headerDescriptor, FileChangeEvent input) {
-
-        return headerDescriptor.inIndices()
-                        .stream()
-                        .flatMap(d -> {
-                            if (d instanceof DataNode.AddNode addNode && addNode.change()) {
-                                try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
-                                    randomAccessFile.seek(addNode.dataStart());
-                                    randomAccessFile.write(input.getData().getBytes());
-                                } catch (IOException ex) {
-                                    return Stream.of(Result.<FileFlushResponse, FileEventSourceActions.FileEventError>err(new FileEventSourceActions.FileEventError(ex)));
-                                }
-                            }
-
-                            return Stream.of(Result.<FileFlushResponse, FileEventSourceActions.FileEventError>ok(new FileFlushResponse()));
-                        })
-                        .collect(ResultCollectors.AggregateResultCollector.toResult(() -> new FileFlushResponse(file), FileEventSourceActions.FileEventError::new));
-    }
 }

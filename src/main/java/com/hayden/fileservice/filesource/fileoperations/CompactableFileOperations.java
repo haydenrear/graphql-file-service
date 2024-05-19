@@ -17,6 +17,8 @@ public interface CompactableFileOperations {
 
     Result<FileCompactifyResponse, FileEventSourceActions.FileEventError> compactify(File file, FileHeader.HeaderDescriptor headerDescriptor);
 
+    Result<FileFlushResponse, FileEventSourceActions.FileEventError> flush(File file, FileHeader.HeaderDescriptor headerDescriptor, FileChangeEvent fileChangeEvent);
+
     interface CompactableFileOperationsResponse extends Responses.AggregateResponse {
 
         Set<File> file();
@@ -63,6 +65,5 @@ public interface CompactableFileOperations {
 
     }
 
-    Result<FileFlushResponse, FileEventSourceActions.FileEventError> flush(File file, FileHeader.HeaderDescriptor headerDescriptor, FileChangeEvent fileChangeEvent);
 
 }

@@ -34,18 +34,18 @@ public class FileEventSource implements FileEventSourceActions{
     @DgsMutation
     public FileMetadata update(FileChangeEventInput dataFetchingEnvironment) {
         return doUpdate(dataFetchingEnvironment)
-                .mapError(mapSearchError(DOING_UPDATING))
+                .doOnError(mapSearchError(DOING_UPDATING))
                 .orElse(null);
     }
 
     @DgsSubscription
     public Flux<FileMetadata> fileMetadata(FileSearch fileEventChange) {
         return Flux.fromStream(this.getFileMetadata(fileEventChange)
-                        .mapError(mapSearchError(RETRIEVING_FILE_METADATA))
+                        .doOnError(mapSearchError(RETRIEVING_FILE_METADATA))
                         .stream()
                 )
                 .flatMap(r -> Flux.from(r).flatMap(result -> Flux.fromStream(result
-                        .mapError(mapSearchError(RETRIEVING_FILE_METADATA))
+                        .doOnError(mapSearchError(RETRIEVING_FILE_METADATA))
                         .stream()
                 )));
     }
@@ -54,11 +54,11 @@ public class FileEventSource implements FileEventSourceActions{
     public Flux<FileChangeEvent> files(FileSearch fileSearch) {
         return Flux.from(
                         getFiles(fileSearch)
-                                .mapError(mapSearchError(SEARCHING_FOR_FILES))
+                                .doOnError(mapSearchError(SEARCHING_FOR_FILES))
                                 .orElse(Flux.empty())
                 )
                 .flatMap(r -> Mono.justOrEmpty(
-                        r.mapError(mapSearchError(SEARCHING_FOR_FILES))
+                        r.doOnError(mapSearchError(SEARCHING_FOR_FILES))
                         .orElse(null)
                 ).flux());
     }

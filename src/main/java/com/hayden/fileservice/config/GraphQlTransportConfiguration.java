@@ -67,7 +67,7 @@ public class GraphQlTransportConfiguration {
     public Collection<GraphQlFederatedSchemaSource> schemas(FederatedGraphQlProperties federatedGraphQlProperties) {
         return ArrayUtilUtilities.fromArray(federatedGraphQlProperties.schemaPath.toFile().listFiles())
                 .flatMap(f -> FileUtils.readToString(f)
-                        .mapError(e -> { throw new RuntimeException("Failed to load schema from file: %s.".formatted(e)); })
+                        .doOnError(e -> { throw new RuntimeException("Failed to load schema from file: %s.".formatted(e)); })
                         .stream()
                         .map(s -> new GraphQlFederatedSchemaSource(GraphQlTarget.String, s))
                 )
@@ -79,7 +79,7 @@ public class GraphQlTransportConfiguration {
         return federatedGraphQlProperties.toSource()
                 .stream()
                 .flatMap(r -> r
-                        .mapError(err -> { throw new RuntimeException("Error parsing data fetchers: %s".formatted(err.getMessage())); })
+                        .doOnError(err -> { throw new RuntimeException("Error parsing data fetchers: %s".formatted(err.getMessage())); })
                         .stream()
                 )
                 .toList();

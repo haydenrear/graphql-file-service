@@ -124,7 +124,7 @@ public enum HeaderOperationTypes {
                                     new FileEventSourceActions.FileEventError("Could not parse %s".formatted(e))));
                         }
                     })
-                    .collect(ResultCollectors.AggregateResultCollector.fromValues(
+                    .collect(ResultCollectors.from(
                             new FileHeader.HeaderDescriptor(),
                             new FileEventSourceActions.FileEventError()
                     ))
