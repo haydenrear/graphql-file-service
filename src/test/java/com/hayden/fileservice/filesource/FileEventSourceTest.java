@@ -3,6 +3,7 @@ package com.hayden.fileservice.filesource;
 import com.hayden.fileservice.codegen.types.FileChangeEvent;
 import com.hayden.fileservice.codegen.types.FileChangeType;
 import com.hayden.fileservice.config.ByteArray;
+import com.hayden.fileservice.data_fetcher.GetFilesRemoteDataFetcher;
 import com.hayden.shared.communication.DataClientPublisher;
 import com.hayden.shared.communication.DataClientSubscriber;
 import com.hayden.utilitymodule.result.Result;
@@ -22,6 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import reactor.core.publisher.Flux;
 
 import com.netflix.graphql.dgs.DgsQueryExecutor;
+
+import java.util.Map;
 
 import static com.hayden.shared.assertions.AssertionUtil.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,13 +54,13 @@ class FileEventSourceTest {
 
         @Language("graphql") String q = """
         subscription {
-            files(fileSearch: {path: "", fileId: "", fileName: "hello", fileType: {type: "text", value: "html"}}) {
+            files(fileSearch: {path: "this", fileId: "ok", fileName: "hello", fileType: {type: "text", value: "html"}}) {
                 fileId
             }
         }
         """;
 
-        ExecutionResult execute = queryExecutor.execute(q);
+        ExecutionResult execute = queryExecutor.execute(GetFilesRemoteDataFetcher.FILE_CHANGE_EVENT, Map.of("path", "this", "fileId", "ok", "fileName", "hello", "fileTypeType", "text", "fileTypeValue", "html"), "ListenToFileChanges");
         assertThat(execute.getErrors().size()).isEqualTo(0);
         assertThat(execute.isDataPresent()).isEqualTo(true);
         String isHello = getDataItem(execute).map(f -> new String(f.getData().getBytes())).blockFirst();

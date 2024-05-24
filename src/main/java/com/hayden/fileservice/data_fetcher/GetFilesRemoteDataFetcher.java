@@ -25,16 +25,18 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
     public static final FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceFetcherId GET_FILES_REMOTE_FED_ID = new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceFetcherId(
             FILES_MIME_TYPE,
             GetFilesRemoteDataFetcher.class.getSimpleName(),
-            GetFilesRemoteDataFetcher.class.getPackageName()
+            new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceId(GetFilesRemoteDataFetcher.class.getPackageName())
     );
 
-    private static final @Language("graphql") String FILE_CHANGE_EVENT = """
+    private static final @Language("graphql") String LISTEN_TO_FILE_CHANGES = """
             subscription ListenToFileChanges($path: String, $fileId: ID, $fileName: String, $fileTypeType: String!, $fileTypeValue: String!) {
               files(fileSearch: { path: $path, fileId: $fileId, fileName: $fileName, fileType: { type: $fileTypeType, value: $fileTypeValue } }) {
                 fileId
               }
             }
-            
+    """;
+
+    private static final @Language("graphql") String GET_FILE_METADATA = """
             subscription GetFileMetadata($path: String, $fileId: ID, $fileName: String, $fileTypeType: String!, $fileTypeValue: String!) {
               fileMetadata(fileSearch: { path: $path, fileId: $fileId, fileName: $fileName, fileType: { type: $fileTypeType, value: $fileTypeValue } }) {
                 id
@@ -45,7 +47,9 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                 changeType
               }
             }
-            
+    """;
+
+    private static final @Language("graphql") String UPDATE_FILE_CHANGE_EVENT = """
             mutation UpdateFileChangeEvent($input: FileChangeEventInput!) {
                   update(fileChangeEvent: $input) {
                      id,
@@ -56,7 +60,9 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                      changeType
                   }
             }
-            """;
+    """;
+
+    public static final @Language("GraphQL") String FILE_CHANGE_EVENT = String.join(System.lineSeparator(), UPDATE_FILE_CHANGE_EVENT, GET_FILE_METADATA, LISTEN_TO_FILE_CHANGES);
 
 
     @Override
@@ -69,11 +75,7 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                         .variables(env.getVariables())
                         .extensions(new HashMap<>())
                         .attributes(new HashMap<>())
-                        .federatedService(new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceFetcherId(
-                                FILES_MIME_TYPE,
-                                this.getClass().getSimpleName(),
-                                this.getClass().getPackage().getName()
-                        ))
+                        .federatedService(GET_FILES_REMOTE_FED_ID)
                         .build()
         );
     }

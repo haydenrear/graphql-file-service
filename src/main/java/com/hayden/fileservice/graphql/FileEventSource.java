@@ -50,8 +50,8 @@ public class FileEventSource implements FileEventSourceActions{
                 )));
     }
 
-    @DgsSubscription
-    public Flux<FileChangeEvent> files(FileSearch fileSearch) {
+    @DgsSubscription(field = "files")
+    public Flux<FileChangeEvent> ok(FileSearch fileSearch) {
         return Flux.from(
                         getFiles(fileSearch)
                                 .doOnError(mapSearchError(SEARCHING_FOR_FILES))
