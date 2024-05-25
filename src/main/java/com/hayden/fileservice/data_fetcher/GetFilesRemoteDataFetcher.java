@@ -76,8 +76,7 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                         .extensions(new HashMap<>())
                         .attributes(new HashMap<>())
                         .federatedService(GET_FILES_REMOTE_FED_ID)
-                        .build()
-        );
+                        .build());
     }
 
     @Override

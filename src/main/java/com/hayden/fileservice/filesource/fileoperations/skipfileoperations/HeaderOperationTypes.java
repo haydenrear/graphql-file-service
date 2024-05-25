@@ -12,6 +12,7 @@ import com.hayden.utilitymodule.result.Result;
 import com.hayden.utilitymodule.result.map.ResultCollectors;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.ByteUtils;
 
 import java.io.File;
 import java.util.*;
@@ -38,7 +39,7 @@ public enum HeaderOperationTypes {
             FileHeader.HeaderDescriptor headerDescriptor,
             FileProperties fileProperties
     ) {
-        byte[] headerSize = new byte[Math.toIntExact(fileProperties.getDataStreamFileHeaderLengthBytes())];
+        byte[] header = new byte[Math.toIntExact(fileProperties.getDataStreamFileHeaderLengthBytes())];
         int i = 0;
         Collection<Result<DataNode.FileEventHeaderResult, FileEventSourceActions.FileEventError>> errors
                 = new ArrayList<>();
@@ -53,20 +54,24 @@ public enum HeaderOperationTypes {
                 case DataNode.AddNode a -> j = writeNode(a, nextToWrite, j, HeaderOperationTypes.ADD.operation);
                 case DataNode.SkipNode skip -> j = writeNode(skip, nextToWrite, j, HeaderOperationTypes.SKIP.operation);
                 default -> errors.add(Result.err(new FileEventSourceActions.FileEventError("Could not write %s".formatted(d))));
-            };
-            System.arraycopy(nextToWrite,0, headerSize, i, nextToWrite.length);
+            }
+            System.arraycopy(nextToWrite,0, header, i, nextToWrite.length);
             i = j;
             if (count < headerDescriptor.inIndices().size()) {
                 byte[] delim = DataStreamFileDelim.BETWEEN_HEADER_OPS.fileDelims.getBytes();
-                System.arraycopy(delim, 0, headerSize, i, delim.length);
+                System.arraycopy(delim, 0, header, i, delim.length);
                 i += delim.length;
             }
             count += 1;
         }
 
+        byte[] emptyHeaderSpace = new byte[(int) fileProperties.getDataStreamFileHeaderLengthBytes() - count];
+        Arrays.fill(emptyHeaderSpace, (byte) 0);
+        System.arraycopy(emptyHeaderSpace, 0, header, count, emptyHeaderSpace.length);
+
         return Result.all(
                 errors,
-                Result.from(new DataNode.FileEventHeaderResult(headerSize), new FileEventSourceActions.FileEventError())
+                Result.from(new DataNode.FileEventHeaderResult(header), new FileEventSourceActions.FileEventError())
         );
     }
 
@@ -150,8 +155,7 @@ public enum HeaderOperationTypes {
                                         NumberEncoder.decodeNumber(eachIndex.get(2)),
                                         getDataEnd(eachIndex, max),
                                         false
-                                )
-                        );
+                                ));
                     });
         }
 
