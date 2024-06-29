@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.reactivestreams.Publisher;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
@@ -46,6 +47,7 @@ import java.util.stream.Stream;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!naive")
 public class SkipFileOperations implements FileOperations, CompactableFileOperations {
 
     private final FileProperties fileProperties;

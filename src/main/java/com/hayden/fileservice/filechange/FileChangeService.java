@@ -21,68 +21,68 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class FileChangeService {
 
-    private final DataClientSubscriber dataClientSubscriber;
-    private final DataClientPublisher dataClientPublisher;
+//    private final DataClientSubscriber dataClientSubscriber;
+//    private final DataClientPublisher dataClientPublisher;
     private final FileSyncProperties fileSyncProperties;
 
-    public record FileSyncEndpoint(Pattern topicMatcher, String partitionId)
-            implements PartitionEndpoint.MultiNodePartitionEndpoint {
-    }
+//    public record FileSyncEndpoint(Pattern topicMatcher, String partitionId)
+//            implements PartitionEndpoint.MultiNodePartitionEndpoint {
+//    }
+//
+//    public Publisher<FileChangeSync> subscribe(@Nullable String fileTopic) {
+//        return reactor.core.publisher.Mono.justOrEmpty(TypeReferenceDelegate.<FileChangeSync>create(FileChangeSync.class))
+//                .flatMapMany(trd -> reactor.core.publisher.Flux.from(dataClientSubscriber.subscribe(
+//                        trd,
+//                        Optional.ofNullable(fileTopic).map(this::filePartitionSyncEndpoint)
+//                                .orElse(this.fileSyncEndpoint())
+//                )));
+//    }
+//
+//    public Publisher<FileChangeSync> subscribe() {
+//        return subscribe(null);
+//    }
 
-    public Publisher<FileChangeSync> subscribe(@Nullable String fileTopic) {
-        return reactor.core.publisher.Mono.justOrEmpty(TypeReferenceDelegate.<FileChangeSync>create(FileChangeSync.class))
-                .flatMapMany(trd -> reactor.core.publisher.Flux.from(dataClientSubscriber.subscribe(
-                        trd,
-                        Optional.ofNullable(fileTopic).map(this::filePartitionSyncEndpoint)
-                                .orElse(this.fileSyncEndpoint())
-                )));
-    }
-
-    public Publisher<FileChangeSync> subscribe() {
-        return subscribe(null);
-    }
-
-    public Publisher<MessageResult> publish(FileChangeEvent fileChangeEvent) {
-        return switch(fileChangeEvent.getChangeType()) {
-            case CREATED -> {
-                yield dataClientPublisher.process(
-                        new FileChangeSync.AddFile(fileChangeEvent),
-                        "",
-                        fileSyncEndpoint()
-                );
-            }
-            case DELETED -> {
-                yield dataClientPublisher.process(
-                        new FileChangeSync.DeleteFile(fileChangeEvent),
-                        "",
-                        fileSyncEndpoint()
-                );
-            }
-            case REMOVE_CONTENT -> {
-                yield dataClientPublisher.process(
-                        new FileChangeSync.RemoveContent(fileChangeEvent),
-                        "",
-                        fileSyncEndpoint()
-                );
-            }
-            case ADD_CONTENT -> {
-                yield dataClientPublisher.process(
-                        new FileChangeSync.AddContent(fileChangeEvent),
-                        "",
-                        fileSyncEndpoint()
-                );
-            }
-            case EXISTING ->
-                    reactor.core.publisher.Flux.empty();
-        };
-    }
-
-    private @NotNull FileSyncEndpoint fileSyncEndpoint() {
-        return new FileSyncEndpoint(fileSyncProperties.getFileSyncEndpointTopicPattern(), fileSyncEndpoint().partitionId());
-    }
-
-    private @NotNull FileSyncEndpoint filePartitionSyncEndpoint(String file) {
-        return new FileSyncEndpoint(fileSyncProperties.getFileSyncEndpointTopicPattern(file), fileSyncEndpoint().partitionId());
-    }
+//    public Publisher<MessageResult> publish(FileChangeEvent fileChangeEvent) {
+//        return switch(fileChangeEvent.getChangeType()) {
+//            case CREATED -> {
+//                yield dataClientPublisher.process(
+//                        new FileChangeSync.AddFile(fileChangeEvent),
+//                        "",
+//                        fileSyncEndpoint()
+//                );
+//            }
+//            case DELETED -> {
+//                yield dataClientPublisher.process(
+//                        new FileChangeSync.DeleteFile(fileChangeEvent),
+//                        "",
+//                        fileSyncEndpoint()
+//                );
+//            }
+//            case REMOVE_CONTENT -> {
+//                yield dataClientPublisher.process(
+//                        new FileChangeSync.RemoveContent(fileChangeEvent),
+//                        "",
+//                        fileSyncEndpoint()
+//                );
+//            }
+//            case ADD_CONTENT -> {
+//                yield dataClientPublisher.process(
+//                        new FileChangeSync.AddContent(fileChangeEvent),
+//                        "",
+//                        fileSyncEndpoint()
+//                );
+//            }
+//            case EXISTING ->
+//                    reactor.core.publisher.Flux.empty();
+//        };
+//    }
+//
+//    private @NotNull FileSyncEndpoint fileSyncEndpoint() {
+//        return new FileSyncEndpoint(fileSyncProperties.getFileSyncEndpointTopicPattern(), fileSyncEndpoint().partitionId());
+//    }
+//
+//    private @NotNull FileSyncEndpoint filePartitionSyncEndpoint(String file) {
+//        return new FileSyncEndpoint(fileSyncProperties.getFileSyncEndpointTopicPattern(file), fileSyncEndpoint().partitionId());
+//    }
 
 }

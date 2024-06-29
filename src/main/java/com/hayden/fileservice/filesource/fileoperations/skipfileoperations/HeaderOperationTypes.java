@@ -12,7 +12,6 @@ import com.hayden.utilitymodule.result.Result;
 import com.hayden.utilitymodule.result.map.ResultCollectors;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.ByteUtils;
 
 import java.io.File;
 import java.util.*;

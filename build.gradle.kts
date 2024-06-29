@@ -1,9 +1,9 @@
 plugins {
     id("com.hayden.spring")
     id("com.hayden.observable-app")
-    id("com.hayden.persistence")
     id("com.hayden.discovery-app")
     id("com.hayden.graphql")
+    id("com.hayden.java-conventions")
 }
 
 group = "com.hayden"
@@ -28,4 +28,14 @@ tasks.generateJava {
 }
 
 tasks.register("prepareKotlinBuildScriptModel") {}
+
+tasks.withType<JavaExec> {
+    dependsOn("copyAgent")
+    dependsOn("dynamicTracingAgent")
+    jvmArgs(
+        "-javaagent:build/agent/opentelemetry-javaagent.jar",
+        "-Dotel.javaagent.configuration-file=src/main/resources/otel/otel.properties",
+        "-javaagent:build/dynamic_agent/tracing_agent.jar"
+    )
+}
 

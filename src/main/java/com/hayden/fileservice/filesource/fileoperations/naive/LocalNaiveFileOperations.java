@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.reactivestreams.Publisher;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import reactor.core.publisher.Flux;
 
 @Component
 @RequiredArgsConstructor
+@Profile("naive")
 public class LocalNaiveFileOperations implements FileOperations {
 
     private final FileStream fileStream;
