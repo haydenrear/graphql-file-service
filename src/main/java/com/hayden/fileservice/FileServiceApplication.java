@@ -12,7 +12,5 @@ public class FileServiceApplication {
         SpringApplication.run(FileServiceApplication.class, args);
     }
 
-
-
 }
 

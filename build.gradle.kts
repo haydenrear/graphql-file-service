@@ -26,4 +26,3 @@ tasks.withType<JavaExec> {
         "-javaagent:build/dynamic_agent/tracing_agent.jar"
     )
 }
-
