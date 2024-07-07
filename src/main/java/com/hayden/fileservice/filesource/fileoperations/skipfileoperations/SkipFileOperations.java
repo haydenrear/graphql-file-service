@@ -69,7 +69,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                         fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength()
                 )
         );
-        return Result.fromThunk(search(input.getPath()).findAny(), FileEventSourceActions.FileEventError::new)
+        return Result.fromThunkError(search(input.getPath()).findAny(), FileEventSourceActions.FileEventError::new)
                 .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
                         .flatMapResult(f -> HeaderOperationTypes.flushHeader(file, f))
                         .flatMapResult(f -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
