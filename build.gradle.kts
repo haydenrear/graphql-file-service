@@ -1,22 +1,10 @@
 plugins {
-    id("com.hayden.spring")
-    id("com.hayden.observable-app")
-    id("com.hayden.discovery-app")
-    id("com.hayden.graphql")
-    id("com.hayden.java-conventions")
+    id("com.hayden.graphql-data-service")
 }
 
 group = "com.hayden"
 version = "0.0.1-SNAPSHOT"
 description = "file-service"
-
-
-dependencies {
-    implementation(project(":utilitymodule"))
-    implementation(project(":shared"))
-    implementation(project(":message-broker"))
-    implementation(project(":graphql"))
-}
 
 tasks.generateJava {
     schemaPaths.add("${projectDir}/src/main/resources/schema")

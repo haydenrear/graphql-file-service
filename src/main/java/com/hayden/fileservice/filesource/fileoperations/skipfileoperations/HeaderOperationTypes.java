@@ -64,9 +64,9 @@ public enum HeaderOperationTypes {
             count += 1;
         }
 
-        byte[] emptyHeaderSpace = new byte[(int) fileProperties.getDataStreamFileHeaderLengthBytes() - count];
-        Arrays.fill(emptyHeaderSpace, (byte) 0);
-        System.arraycopy(emptyHeaderSpace, 0, header, count, emptyHeaderSpace.length);
+//        byte[] emptyHeaderSpace = new byte[(int) fileProperties.getDataStreamFileHeaderLengthBytes() - count];
+//        Arrays.fill(emptyHeaderSpace, (byte) 0);
+//        System.arraycopy(emptyHeaderSpace, 0, header, count, emptyHeaderSpace.length);
 
         return Result.all(
                 errors,

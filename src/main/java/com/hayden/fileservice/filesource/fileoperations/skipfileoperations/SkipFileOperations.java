@@ -116,8 +116,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
             try (RandomAccessFile randomAccessFile = new RandomAccessFile(e.getKey(), "rw")) {
                 randomAccessFile.seek(addNode.dataStart());
                 randomAccessFile.write(input.getData().getBytes());
-            } catch (
-                    IOException ex) {
+            } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
