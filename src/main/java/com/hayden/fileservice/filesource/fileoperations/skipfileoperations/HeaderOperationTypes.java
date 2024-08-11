@@ -105,7 +105,7 @@ public enum HeaderOperationTypes {
         try {
             List<byte[]> eachHeaderOp = ByteUtility.splitByteArrayByByteValue(bytes, header);
             AtomicLong max = new AtomicLong(header.length);
-            return eachHeaderOp.stream()
+            var f = eachHeaderOp.stream()
                     .flatMap(eachHeader -> {
                         byte[] starting = DataStreamFileDelim.INTRA_HEADER_DESCRIPTORS_DELIM.fileDelims.getBytes();
                         try {
@@ -130,6 +130,7 @@ public enum HeaderOperationTypes {
                             new FileEventSourceActions.FileEventError()
                     ))
                     .flatMapResult(o -> Result.ok(new FileHeader.HeaderDescriptor(o.inIndices(), new FileHeader.HeaderDescriptorData(header.length, max.get()))));
+            return f;
         } catch (ArrayIndexOutOfBoundsException e) {
             return Result.err(new FileEventSourceActions.FileEventError(e));
         }

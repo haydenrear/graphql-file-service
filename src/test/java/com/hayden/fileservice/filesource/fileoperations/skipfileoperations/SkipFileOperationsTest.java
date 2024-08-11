@@ -113,6 +113,9 @@ class SkipFileOperationsTest {
     @Test
     void removeContentFromEndMultiplePass() {
         File testFile = createTestFile("work/to_remove_content_from_end_multiple_pass.txt", "hello there");
+        var all = readAllBytes(testFile);
+        String x = new String(all);
+        System.out.println(x);
         skipFileOperations.removeContent(fileChangeEvent(FileChangeType.REMOVE_CONTENT, "to_remove_content_from_end_multiple_pass.txt", 3, 8));
         assertThat(new String(Assertions.assertDoesNotThrow(() -> readAllBytes(testFile)))).isEqualTo("hello th");
     }

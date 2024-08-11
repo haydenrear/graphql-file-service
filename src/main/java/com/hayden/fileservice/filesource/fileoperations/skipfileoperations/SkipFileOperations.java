@@ -69,11 +69,15 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                         fileProperties.getDataStreamFileHeaderLengthBytes() + input.getLength()
                 )
         );
-        return Result.fromThunkError(search(input.getPath()).findAny(), FileEventSourceActions.FileEventError::new)
-                .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
-                        .flatMapResult(f -> HeaderOperationTypes.flushHeader(file, f))
-                        .flatMapResult(f -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
-                );
+        return search(input.getPath()).findAny()
+                .map(fileFound -> {
+                    return Result.from(fileFound, new FileEventSourceActions.FileEventError())
+                            .flatMapResult(file -> HeaderOperationTypes.writeHeader(descriptor, fileProperties)
+                                    .flatMapResult(f -> HeaderOperationTypes.flushHeader(file, f))
+                                    .flatMapResult(f -> FileHelpers.writeToFile(input, file, fileProperties.getDataStreamFileHeaderLengthBytes()))
+                            );
+                })
+                .orElse(Result.err(new FileEventSourceActions.FileEventError("Fail")));
     }
 
 
@@ -96,7 +100,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
 
     private Result<FileMetadata, FileEventSourceActions.FileEventError> doAddRemoveFileOp(FileChangeEventInput input) {
         return getFileAndHeader(input.getPath())
-                .flatMapResultError(headerOps -> dataNodeOperationsDelegate.doChangeNode(headerOps.getValue(), input)
+                .flatMapResult(headerOps -> dataNodeOperationsDelegate.doChangeNode(headerOps.getValue(), input)
                         .doOnError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
                         .map(h -> Map.entry(headerOps.getKey(), h))
                         .map(e -> getFileChangeNodeOperationsResultEntry(input, e))
@@ -135,7 +139,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                                 .orElse(Result.ResultInner.empty()),
                         Result.Error.err(new FileEventSourceActions.FileEventError("Could not find file."))
                 )
-                .flatMapResultError(byteFile -> Result
+                .flatMapResult(byteFile -> Result
                         .from(
                                 HeaderOperationTypes.getOps(byteFile.getValue()),
                                 new FileEventSourceActions.FileEventError("File operations unsuccessful.")
