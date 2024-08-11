@@ -68,10 +68,7 @@ public enum HeaderOperationTypes {
 //        Arrays.fill(emptyHeaderSpace, (byte) 0);
 //        System.arraycopy(emptyHeaderSpace, 0, header, count, emptyHeaderSpace.length);
 
-        return Result.all(
-                errors,
-                Result.from(new DataNode.FileEventHeaderResult(header), new FileEventSourceActions.FileEventError())
-        );
+        return Result.from(new DataNode.FileEventHeaderResult(header), new FileEventSourceActions.FileEventError());
     }
 
     private static int writeNode(DataNode a, byte[] nextToWrite, int i, String nodeType) {

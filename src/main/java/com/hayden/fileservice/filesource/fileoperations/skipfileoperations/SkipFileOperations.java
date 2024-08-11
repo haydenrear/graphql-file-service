@@ -11,7 +11,7 @@ import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datan
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.RandomUtils;
-import com.hayden.utilitymodule.result.error.Error;
+import com.hayden.utilitymodule.result.error.ErrorCollect;
 import com.hayden.utilitymodule.result.Result;
 import com.hayden.utilitymodule.result.map.ResultCollectors;
 import lombok.RequiredArgsConstructor;
@@ -96,7 +96,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
 
     private Result<FileMetadata, FileEventSourceActions.FileEventError> doAddRemoveFileOp(FileChangeEventInput input) {
         return getFileAndHeader(input.getPath())
-                .flatMapResult(headerOps -> dataNodeOperationsDelegate.doChangeNode(headerOps.getValue(), input)
+                .flatMapResultError(headerOps -> dataNodeOperationsDelegate.doChangeNode(headerOps.getValue(), input)
                         .doOnError(e -> log.error("Error when attempting to insert node: {}.", e.errors()))
                         .map(h -> Map.entry(headerOps.getKey(), h))
                         .map(e -> getFileChangeNodeOperationsResultEntry(input, e))
@@ -123,19 +123,21 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         return e;
     }
 
-    private Result<Map.Entry<File, FileHeader.HeaderDescriptor>, Error> getFileAndHeader(String path) {
+    private Result<Map.Entry<File, FileHeader.HeaderDescriptor>, FileEventSourceActions.FileEventError> getFileAndHeader(String path) {
         return Result.from(search(path)
                                 .flatMap(f -> FileHeader.parseHeader(f, fileProperties)
                                         .doOnError(e -> log.error("Error when parsing file: {}.", e.errors()))
                                         .stream()
                                         .map(b -> Map.entry(f, b))
                                 )
-                                .findAny(),
-                        new FileEventSourceActions.FileEventError("Could not find file.")
+                                .findAny()
+                                .map(Result.ResultInner::ok)
+                                .orElse(Result.ResultInner.empty()),
+                        Result.Error.err(new FileEventSourceActions.FileEventError("Could not find file."))
                 )
-                .flatMapResult(byteFile -> Result
+                .flatMapResultError(byteFile -> Result
                         .from(
-                                Optional.of(HeaderOperationTypes.getOps(byteFile.getValue())),
+                                HeaderOperationTypes.getOps(byteFile.getValue()),
                                 new FileEventSourceActions.FileEventError("File operations unsuccessful.")
                         )
                         .flatMapResult(h -> h.map(s -> Map.entry(byteFile.getKey(), s)))
