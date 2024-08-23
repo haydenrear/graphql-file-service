@@ -11,7 +11,6 @@ import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datan
 import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode.DataNodeOperations;
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.RandomUtils;
-import com.hayden.utilitymodule.result.error.ErrorCollect;
 import com.hayden.utilitymodule.result.Result;
 import com.hayden.utilitymodule.result.map.ResultCollectors;
 import lombok.RequiredArgsConstructor;
@@ -135,9 +134,9 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                                         .map(b -> Map.entry(f, b))
                                 )
                                 .findAny()
-                                .map(Result.ResultInner::ok)
-                                .orElse(Result.ResultInner.empty()),
-                        Result.Error.err(new FileEventSourceActions.FileEventError("Could not find file."))
+                                .map(Result.Ok::ok)
+                                .orElse(Result.Ok.empty()),
+                        Result.Err.err(new FileEventSourceActions.FileEventError("Could not find file."))
                 )
                 .flatMapResult(byteFile -> Result
                         .from(
