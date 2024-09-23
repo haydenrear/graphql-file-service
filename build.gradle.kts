@@ -1,5 +1,6 @@
 plugins {
     id("com.hayden.graphql-data-service")
+    id("com.hayden.discovery-app")
 }
 
 group = "com.hayden"
