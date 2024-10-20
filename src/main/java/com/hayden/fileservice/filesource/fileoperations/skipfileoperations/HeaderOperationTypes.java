@@ -43,6 +43,7 @@ public enum HeaderOperationTypes {
         Collection<Result<DataNode.FileEventHeaderResult, FileEventSourceActions.FileEventError>> errors
                 = new ArrayList<>();
         int count = 0;
+        int bytesWritten = 0;
         for (DataNode d : headerDescriptor.inIndices()) {
             int j = i;
             byte[] nextToWrite = new byte[
@@ -62,13 +63,19 @@ public enum HeaderOperationTypes {
                 i += delim.length;
             }
             count += 1;
+            bytesWritten += i;
         }
 
-//        byte[] emptyHeaderSpace = new byte[(int) fileProperties.getDataStreamFileHeaderLengthBytes() - count];
-//        Arrays.fill(emptyHeaderSpace, (byte) 0);
-//        System.arraycopy(emptyHeaderSpace, 0, header, count, emptyHeaderSpace.length);
+        clearHeaderPastWritten(header, bytesWritten);
 
         return Result.from(new DataNode.FileEventHeaderResult(header), new FileEventSourceActions.FileEventError());
+    }
+
+    private static void clearHeaderPastWritten(byte[] header, int bytesWritten) {
+        int sizeFill = header.length - bytesWritten;
+        byte[] emptyHeaderSpace = new byte[sizeFill];
+        Arrays.fill(emptyHeaderSpace, (byte) 0);
+        System.arraycopy(emptyHeaderSpace, 0, header, bytesWritten, sizeFill);
     }
 
     private static int writeNode(DataNode a, byte[] nextToWrite, int i, String nodeType) {

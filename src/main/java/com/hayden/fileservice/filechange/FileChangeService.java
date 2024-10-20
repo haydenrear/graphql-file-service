@@ -16,7 +16,15 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-
+/**
+ * Distribute information about file changes...
+ * should be CdcGraphQlDataFetcher... so then this server provides to the Gateway
+ * an implementation of CdcGraphQlDataFetcher, then Gateway compiles it on the fly,
+ * the Gateway nodes have access to queue, limiting number of subscribers (rather than
+ * have number of listeners equivalent to number of services, as this is bad... too many),
+ * then the Gateway nodes abstract away how they listen to queue, and the Gateway fields
+ * the sync requests but the FileChangeService publishes the changes that it performs.
+ */
 @Component
 @RequiredArgsConstructor
 public class FileChangeService {
