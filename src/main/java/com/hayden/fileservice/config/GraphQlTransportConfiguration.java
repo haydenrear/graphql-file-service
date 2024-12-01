@@ -1,7 +1,9 @@
 package com.hayden.fileservice.config;
 
 import com.hayden.fileservice.data_fetcher.GetFilesRemoteDataFetcher;
+import com.hayden.fileservice.graphql.FileServiceChangeModelContext;
 import com.hayden.graphql.federated.transport.http.HttpGraphQlTransportBuilder;
+import com.hayden.graphql.federated.visitor_model.VisitorModelService;
 import com.hayden.graphql.models.GraphQlTarget;
 import com.hayden.graphql.models.federated.service.FederatedGraphQlServiceFetcherItemId;
 import com.hayden.graphql.models.visitor.datafetcher.DataFetcherGraphQlSource;
@@ -13,6 +15,7 @@ import com.hayden.utilitymodule.io.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MimeType;
@@ -21,6 +24,7 @@ import java.util.*;
 
 @Configuration
 @Slf4j
+@ComponentScan(basePackageClasses = VisitorModelService.class)
 public class GraphQlTransportConfiguration {
 
 
@@ -109,6 +113,11 @@ public class GraphQlTransportConfiguration {
                 dataFetchers,
                 true
         );
+    }
+
+    @Bean
+    FileServiceChangeModelContext ctx() {
+        return new FileServiceChangeModelContext();
     }
 
 }
