@@ -25,8 +25,7 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
     public static final FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceFetcherId GET_FILES_REMOTE_FED_ID = new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceFetcherId(
             FILES_MIME_TYPE,
             GetFilesRemoteDataFetcher.class.getSimpleName(),
-            new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceId(GetFilesRemoteDataFetcher.class.getPackageName())
-    );
+            new FederatedGraphQlServiceFetcherItemId.FederatedGraphQlServiceId(GetFilesRemoteDataFetcher.class.getPackageName()));
 
     private static final @Language("graphql") String LISTEN_TO_FILE_CHANGES = """
             subscription ListenToFileChanges($path: String, $fileId: ID, $fileName: String, $fileTypeType: String!, $fileTypeValue: String!) {
@@ -89,6 +88,13 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
         } else {
             return Result.err(new RemoteDataFetcherError("No file change event found."));
         }
+    }
+
+    @Override
+    public List<RequestTemplate> requestTemplates() {
+        return List.of(RequestTemplate.mutationOf(UPDATE_FILE_CHANGE_EVENT),
+                RequestTemplate.subscriptionOf(GET_FILE_METADATA),
+                RequestTemplate.subscriptionOf(LISTEN_TO_FILE_CHANGES));
     }
 
     @Override
