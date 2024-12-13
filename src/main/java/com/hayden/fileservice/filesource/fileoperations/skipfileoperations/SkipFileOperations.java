@@ -1,5 +1,6 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations;
 
+import com.google.common.collect.Sets;
 import com.hayden.fileservice.codegen.types.*;
 import com.hayden.fileservice.config.ByteArray;
 import com.hayden.fileservice.config.FileProperties;
@@ -12,7 +13,9 @@ import com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datan
 import com.hayden.fileservice.graphql.FileEventSourceActions;
 import com.hayden.utilitymodule.RandomUtils;
 import com.hayden.utilitymodule.result.Result;
-import com.hayden.utilitymodule.result.map.ResultCollectors;
+import com.hayden.utilitymodule.result.error.Err;
+import com.hayden.utilitymodule.result.map.AggregateResultCollectors;
+import com.hayden.utilitymodule.result.agg.Responses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -134,9 +137,9 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                                         .map(b -> Map.entry(f, b))
                                 )
                                 .findAny()
-                                .map(Result.Ok::ok)
-                                .orElse(Result.Ok.empty()),
-                        Result.Err.err(new FileEventSourceActions.FileEventError("Could not find file."))
+                                .map(Responses.Ok::ok)
+                                .orElse(Responses.Ok.empty()),
+                        Err.err(new FileEventSourceActions.FileEventError("Could not find file."))
                 )
                 .flatMapResult(byteFile -> Result
                         .from(
@@ -255,7 +258,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
 
                     return Stream.of(Result.<FileFlushResponse, FileEventSourceActions.FileEventError>ok(new FileFlushResponse()));
                 })
-                .collect(ResultCollectors.AggregateResultCollector.toResult(() -> new FileFlushResponse(file), FileEventSourceActions.FileEventError::new));
+                .collect(AggregateResultCollectors.AggregateResultCollector.toResult(() -> new FileFlushResponse(file), FileEventSourceActions.FileEventError::new));
     }
 
     private @Nullable Result<FileCompactifyResponse, FileEventSourceActions.FileEventError> compactifyFileAndFlushHeader(File file, FileHeader.HeaderDescriptor headerDescriptor, Path archived) throws IOException {
@@ -271,7 +274,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         if (result.isOk() && !archived.toFile().delete()) {
             return Result.all(
                     result,
-                    Result.err(new FileEventSourceActions.FileEventError("File successfully written but could not delete archive file."))
+                    Result.err(new FileEventSourceActions.FileEventError(Sets.newHashSet(new FileEventSourceActions.FileEventErrorItem("File successfully written but could not delete archive file."))))
             );
         }
 

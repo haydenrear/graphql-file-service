@@ -1,7 +1,7 @@
 package com.hayden.fileservice.filesource.fileoperations.skipfileoperations.datanode;
 
-import com.hayden.utilitymodule.result.Agg;
-import com.hayden.utilitymodule.result.res.Responses;
+import com.hayden.utilitymodule.result.agg.Agg;
+import com.hayden.utilitymodule.result.agg.Responses;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -23,7 +23,7 @@ public interface DataNode {
     record FileEventHeaderResult(byte[] responses) implements Responses.AggregateResponse {
 
         @Override
-        public void add(Agg aggregateResponse) {
+        public void addAgg(Agg aggregateResponse) {
             throw new UnsupportedOperationException("Haven't refactored to mapping collector.");
         }
     }

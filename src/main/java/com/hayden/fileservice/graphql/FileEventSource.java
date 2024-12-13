@@ -74,9 +74,8 @@ public class FileEventSource implements FileEventSourceActions{
 
     @Override
     public Result<Publisher<Result<FileChangeEvent, FileEventError>>, FileEventError> getFiles(FileSearch dataFetchingEnvironment) {
-        return Result.ok(
-                Flux.from(this.fileDataSource.getFile(dataFetchingEnvironment))
-        );
+        return Result.resOk(
+                Flux.from(this.fileDataSource.getFile(dataFetchingEnvironment)));
     }
 
     @Override
