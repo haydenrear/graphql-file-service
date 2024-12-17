@@ -42,8 +42,8 @@ class FileStreamTest {
     }
 
     private static void equalsByteNums(Result<ByteBuffer, FileEventSourceActions.FileEventError> r, int expected) {
-        assertThat(r.isPresent()).isTrue();
-        assertThat(r.get().array().length).isEqualTo(expected);
+        assertThat(r.one().isPresent()).isTrue();
+        assertThat(r.one().get().array().length).isEqualTo(expected);
     }
 
 }

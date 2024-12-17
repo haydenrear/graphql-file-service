@@ -133,7 +133,8 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         return Result.from(search(path)
                                 .flatMap(f -> FileHeader.parseHeader(f, fileProperties)
                                         .doOnError(e -> log.error("Error when parsing file: {}.", e.errors()))
-                                        .stream()
+                                        .many()
+                                        .toStream()
                                         .map(b -> Map.entry(f, b))
                                 )
                                 .findAny()
@@ -165,7 +166,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         if (fileHeader.isError()) {
             return Flux.just(Result.err(new FileEventSourceActions.FileEventError("Could not find path for %s.".formatted(path))));
         }
-        return Flux.fromStream(fileHeader.stream())
+        return Flux.fromStream(fileHeader.many().toStream())
                 .flatMap(SkipFileOperations::readFile);
     }
 
@@ -174,7 +175,7 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
         if (fileHeader.isError()) {
             return Flux.just(Result.err(new FileEventSourceActions.FileEventError("Could not find path for %s.".formatted(path))));
         }
-        return Flux.fromStream(fileHeader.stream())
+        return Flux.fromStream(fileHeader.many().toStream())
                 .flatMap(SkipFileOperations::readFile);
     }
 

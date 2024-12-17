@@ -43,7 +43,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(90, 170));
         // Call the method and assert the result
-        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.headerDescriptor().inIndices(), true);
     }
 
@@ -66,7 +66,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(2048, 2048));
 
         // Call the method and assert the result
-        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -95,7 +95,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
-        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
@@ -122,7 +122,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 45));
 
         // Call the method and assert the result
-        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -160,7 +160,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
-        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
@@ -188,7 +188,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
-        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
 
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
@@ -218,7 +218,7 @@ class DataNodeOperationsTest {
                     new FileHeader.HeaderDescriptorData(90, 130 + i));
 
             // Call the method and assert the result
-            var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+            var actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
 
             assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
         });
@@ -249,7 +249,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 140));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
@@ -276,7 +276,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 150));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
@@ -303,7 +303,7 @@ class DataNodeOperationsTest {
             expectedOutput.inIndices().add(new DataNode.AddNode(15 + i, 30 + i, 105, 120, true));
             expectedOutput.inIndices().add(new DataNode.AddNode(30 + i, 40 + i, 120, 130, true));
             // Call the method and assert the result
-            FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+            FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
             assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
         });
     }
@@ -330,7 +330,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30)
         );
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
         existingNodes = new ArrayList<>();
@@ -351,7 +351,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
 
@@ -371,7 +371,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
 
         existingNodes = new ArrayList<>();
@@ -389,7 +389,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
 
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
@@ -414,7 +414,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -437,7 +437,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -476,7 +476,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 40));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -502,7 +502,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 40));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -528,7 +528,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 40));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -554,7 +554,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 40));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -582,7 +582,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
@@ -609,7 +609,7 @@ class DataNodeOperationsTest {
                 ),
                 new FileHeader.HeaderDescriptorData(0, 30));
         // Call the method and assert the result
-        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -632,7 +632,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 40));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -655,7 +655,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(0, 30));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices());
     }
 
@@ -684,7 +684,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 135));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 
@@ -711,7 +711,7 @@ class DataNodeOperationsTest {
                 new FileHeader.HeaderDescriptorData(90, 143));
 
         // Call the method and assert the result
-        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).get().headerDescriptor();
+        FileHeader.HeaderDescriptor actualOutput = dataNodeOperations.doChangeNode(inIndices, eventInput).one().get().headerDescriptor();
         assertEqualsValue(expectedOutput.inIndices(), actualOutput.inIndices(), true);
     }
 

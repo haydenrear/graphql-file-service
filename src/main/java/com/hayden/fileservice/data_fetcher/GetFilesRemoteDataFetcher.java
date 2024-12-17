@@ -15,6 +15,7 @@ import org.springframework.util.MimeType;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @NoArgsConstructor
@@ -103,7 +104,7 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
     }
 
 
-    private static <U> @NotNull List<Result<FileChangeEvent, RemoteDataFetcherError>> parseResult(List<U> fromValue) {
+    private static <U> @NotNull List<? extends Result<FileChangeEvent, RemoteDataFetcherError>> parseResult(List<U> fromValue) {
         var multiple = fromValue.stream()
                 .flatMap(u -> {
                     try {
@@ -113,19 +114,20 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
                     }
                 })
                 .toList();
+
         return multiple;
     }
 
     private static @NotNull Result<FileChangeEvent, RemoteDataFetcherError> returnMultipleError(
-            List<Result<FileChangeEvent, RemoteDataFetcherError>> multiple
+            List<? extends Result<FileChangeEvent, RemoteDataFetcherError>> multiple
     ) {
         Result<FileChangeEvent, RemoteDataFetcherError> res = multiple.getFirst();
         if (res.isError()) {
-            assert res.error().isPresent();
-            res.error().get().addError(SingleError.fromMessage("Multiple data fetcher file change events found. Returning only one with error."));
+            assert res.hasErr(Objects::nonNull);
+            res.e().get().addError(SingleError.fromMessage("Multiple data fetcher file change events found. Returning only one with error."));
             return res;
         } else {
-            return Result.from(res.get(), new RemoteDataFetcherError("Multiple file change events found."));
+            return Result.from(res.one().get(), new RemoteDataFetcherError("Multiple file change events found."));
         }
     }
 }

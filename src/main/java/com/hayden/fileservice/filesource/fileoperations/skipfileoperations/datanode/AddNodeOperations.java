@@ -24,7 +24,7 @@ public class AddNodeOperations implements DataNodeOperations{
 
     @Override
     public Result<ChangeNodeOperationsResult, FileEventSourceActions.FileEventError> doChangeNode(FileHeader.HeaderDescriptor inIndices, FileChangeEventInput eventInput) {
-        var nodeType = getDataNode(eventInput, inIndices).get();
+        var nodeType = getDataNode(eventInput, inIndices).one().get();
         List<DataNode> existingNodes = new ArrayList<>(inIndices.inIndices());
         var updateNodes = insertNodes(existingNodes, nodeType);
         return Result.ok(new ChangeNodeOperationsResult(nodeType, new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData())));

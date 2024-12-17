@@ -30,7 +30,7 @@ class HeaderOperationTypesTest {
         ), new FileProperties());
 
         assertTrue(headerWrite.isOk());
-        byte[] responses = headerWrite.get().responses();
+        byte[] responses = headerWrite.one().get().responses();
         System.out.println(Arrays.toString(responses));
         System.out.println(Arrays.toString(new String(responses).split(DataStreamFileDelim.SPLIT_HEADER_OPERATION_TY_DELIM.fileDelims)));
         HeaderOperationTypes.getOps(responses);

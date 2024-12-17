@@ -23,7 +23,7 @@ public class RemoveNodeOperations implements DataNodeOperations {
 
     public Result<ChangeNodeOperationsResult, FileEventSourceActions.FileEventError> doChangeNode(FileHeader.HeaderDescriptor inIndices,
                                                                                                  FileChangeEventInput eventInput) {
-        var nodeType = getDataNode(eventInput, inIndices).get();
+        var nodeType = getDataNode(eventInput, inIndices).one().get();
         List<DataNode> existingNodes = new ArrayList<>(inIndices.inIndices());
         var updateNodes = removeNodes(existingNodes, nodeType);
         return Result.ok(new ChangeNodeOperationsResult(nodeType, new FileHeader.HeaderDescriptor(updateNodes, inIndices.headerDescriptorData())));

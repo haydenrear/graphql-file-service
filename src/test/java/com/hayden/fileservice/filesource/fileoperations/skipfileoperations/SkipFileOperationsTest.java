@@ -199,7 +199,7 @@ class SkipFileOperationsTest {
 
     private byte[] readAllBytes(File testFile) {
         byte[] blocked = Flux.from(skipFileOperations.getFile(testFile.toPath()))
-                .flatMap(r -> Flux.fromStream(r.stream()))
+                .flatMap(r -> Flux.fromStream(r.many().toStream()))
                 .map(f -> f.getData().getBytes())
                 .collectList()
                 .map(b -> {
