@@ -10,7 +10,7 @@ import com.hayden.fileservice.codegen.types.FileMetadata;
 import com.hayden.fileservice.codegen.types.FileSearch;
 import com.hayden.utilitymodule.result.agg.AggregateError;
 import com.hayden.utilitymodule.result.agg.AggregateParamError;
-import com.hayden.utilitymodule.result.error.ErrorCollect;
+import com.hayden.utilitymodule.result.error.SingleError;
 import com.hayden.utilitymodule.result.Result;
 import org.reactivestreams.Publisher;
 
@@ -26,11 +26,11 @@ public interface FileEventSourceActions {
         }
 
         public FileEventError(Throwable throwable, String cause) {
-            this(Sets.newHashSet(new FileEventErrorItem(ErrorCollect.fromE(throwable, cause))));
+            this(Sets.newHashSet(new FileEventErrorItem(SingleError.fromE(throwable, cause))));
         }
 
         public FileEventError(String throwable) {
-            this(Sets.newHashSet(new FileEventErrorItem(ErrorCollect.fromMessage(throwable))));
+            this(Sets.newHashSet(new FileEventErrorItem(SingleError.fromMessage(throwable))));
         }
 
         @Override
@@ -39,18 +39,18 @@ public interface FileEventSourceActions {
         }
     }
 
-    record FileEventErrorItem(ErrorCollect fileEventErrors) implements ErrorCollect {
+    record FileEventErrorItem(SingleError fileEventErrors) implements SingleError {
 
         public FileEventErrorItem(Throwable throwable) {
-            this(ErrorCollect.fromE(throwable));
+            this(SingleError.fromE(throwable));
         }
 
         public FileEventErrorItem(Throwable throwable, String cause) {
-            this(ErrorCollect.fromE(throwable, cause));
+            this(SingleError.fromE(throwable, cause));
         }
 
         public FileEventErrorItem(String throwable) {
-            this(ErrorCollect.fromMessage(throwable));
+            this(SingleError.fromMessage(throwable));
         }
 
         @Override

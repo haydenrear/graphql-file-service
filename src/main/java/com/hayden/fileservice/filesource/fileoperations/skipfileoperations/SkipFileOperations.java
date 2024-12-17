@@ -15,7 +15,7 @@ import com.hayden.utilitymodule.RandomUtils;
 import com.hayden.utilitymodule.result.Result;
 import com.hayden.utilitymodule.result.error.Err;
 import com.hayden.utilitymodule.result.map.AggregateResultCollectors;
-import com.hayden.utilitymodule.result.agg.Responses;
+import com.hayden.utilitymodule.result.ok.Ok;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -137,8 +137,8 @@ public class SkipFileOperations implements FileOperations, CompactableFileOperat
                                         .map(b -> Map.entry(f, b))
                                 )
                                 .findAny()
-                                .map(Responses.Ok::ok)
-                                .orElse(Responses.Ok.empty()),
+                                .map(Ok::ok)
+                                .orElse(Ok.empty()),
                         Err.err(new FileEventSourceActions.FileEventError("Could not find file."))
                 )
                 .flatMapResult(byteFile -> Result

@@ -5,7 +5,7 @@ import com.hayden.graphql.models.dataservice.RemoteDataFetcherImpl;
 import com.hayden.graphql.models.federated.request.FederatedRequestData;
 import com.hayden.graphql.models.federated.request.FederatedRequestDataItem;
 import com.hayden.graphql.models.federated.service.FederatedGraphQlServiceFetcherItemId;
-import com.hayden.utilitymodule.result.error.ErrorCollect;
+import com.hayden.utilitymodule.result.error.SingleError;
 import com.hayden.utilitymodule.result.Result;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.NoArgsConstructor;
@@ -122,7 +122,7 @@ public class GetFilesRemoteDataFetcher extends RemoteDataFetcherImpl<FileChangeE
         Result<FileChangeEvent, RemoteDataFetcherError> res = multiple.getFirst();
         if (res.isError()) {
             assert res.error().isPresent();
-            res.error().get().addError(ErrorCollect.fromMessage("Multiple data fetcher file change events found. Returning only one with error."));
+            res.error().get().addError(SingleError.fromMessage("Multiple data fetcher file change events found. Returning only one with error."));
             return res;
         } else {
             return Result.from(res.get(), new RemoteDataFetcherError("Multiple file change events found."));

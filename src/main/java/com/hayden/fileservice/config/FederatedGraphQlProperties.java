@@ -2,7 +2,7 @@ package com.hayden.fileservice.config;
 
 
 import com.hayden.graphql.models.visitor.datafetcher.DataFetcherGraphQlSource;
-import com.hayden.utilitymodule.result.error.ErrorCollect;
+import com.hayden.utilitymodule.result.error.SingleError;
 import com.hayden.utilitymodule.result.Result;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -25,7 +25,7 @@ public class FederatedGraphQlProperties {
 
     Map<String, List<DataFetcherSource>> dataFetcherSources;
 
-    public Collection<Result<DataFetcherGraphQlSource, ErrorCollect>> toSource() {
+    public Collection<Result<DataFetcherGraphQlSource, SingleError>> toSource() {
         return new ArrayList<>();
     }
 
